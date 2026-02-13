@@ -2,14 +2,14 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Scorecard.Api.Data;
-using Scorecard.Api.Hubs;
-using Scorecard.Api.Services;
+using Scoreboard.Api.Data;
+using Scoreboard.Api.Hubs;
+using Scoreboard.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Database
-builder.Services.AddDbContext<ScorecardDbContext>(options =>
+builder.Services.AddDbContext<ScoreboardDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Services
@@ -17,7 +17,7 @@ builder.Services.AddScoped<GameService>();
 builder.Services.AddScoped<AuthService>();
 
 // Auth
-var jwtKey = builder.Configuration["Jwt:Key"] ?? "ScorecardDefaultSecretKeyThatShouldBeChanged123!";
+var jwtKey = builder.Configuration["Jwt:Key"] ?? "ScoreboardDefaultSecretKeyThatShouldBeChanged123!";
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -27,8 +27,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "Scorecard",
-            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "Scorecard",
+            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "Scoreboard",
+            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "Scoreboard",
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
         };
 

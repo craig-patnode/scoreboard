@@ -8,7 +8,7 @@ on:
 
 env:
   DOTNET_VERSION: '8.0.x'
-  AZURE_WEBAPP_NAME: 'scorecard-app'  # Change to your Azure App Service name
+  AZURE_WEBAPP_NAME: 'scoreboard-app'  # Change to your Azure App Service name
   AZURE_WEBAPP_PACKAGE_PATH: './publish'
 
 jobs:
@@ -25,13 +25,13 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
     - name: Restore dependencies
-      run: dotnet restore Scorecard.sln
+      run: dotnet restore Scoreboard.sln
 
     - name: Build
-      run: dotnet build Scorecard.sln --configuration Release --no-restore
+      run: dotnet build Scoreboard.sln --configuration Release --no-restore
 
     - name: Publish API (includes static files)
-      run: dotnet publish src/Scorecard.Api/Scorecard.Api.csproj --configuration Release --output ${{ env.AZURE_WEBAPP_PACKAGE_PATH }} --no-build
+      run: dotnet publish src/Scoreboard.Api/Scoreboard.Api.csproj --configuration Release --output ${{ env.AZURE_WEBAPP_PACKAGE_PATH }} --no-build
 
     - name: Deploy to Azure Web App
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'

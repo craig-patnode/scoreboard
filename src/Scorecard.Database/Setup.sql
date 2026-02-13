@@ -1,12 +1,12 @@
 -- ============================================
--- Scorecard Database Setup Script
+-- Scoreboard Database Setup Script
 -- Run this script to create all tables and seed data
 -- ============================================
 
 -- Create database (run separately if needed)
--- CREATE DATABASE [ScorecardDb];
+-- CREATE DATABASE [ScoreboardDb];
 -- GO
--- USE [ScorecardDb];
+-- USE [ScoreboardDb];
 -- GO
 
 -- ============================================
@@ -21,7 +21,7 @@ CREATE TABLE [dbo].[Sport]
     [SportCode]     VARCHAR(10)     NOT NULL,
     [HalvesCount]   INT             NOT NULL    DEFAULT 2,
     [PeriodName]    NVARCHAR(20)    NOT NULL    DEFAULT N'Half',
-    [HasCards]      BIT             NOT NULL    DEFAULT 0,
+    [Hasboards]      BIT             NOT NULL    DEFAULT 0,
     [HasTimer]      BIT             NOT NULL    DEFAULT 1,
     [TimerDirection] VARCHAR(4)     NOT NULL    DEFAULT 'UP',
     [DefaultPeriodLengthSeconds] INT NOT NULL   DEFAULT 2700,
@@ -178,8 +178,8 @@ CREATE TABLE [dbo].[GameTeamStats]
     [TeamId]            INT         NOT NULL,
     [IsHome]            BIT         NOT NULL    DEFAULT 0,
     [Score]             INT         NOT NULL    DEFAULT 0,
-    [YellowCards]       INT         NOT NULL    DEFAULT 0,
-    [RedCards]          INT         NOT NULL    DEFAULT 0,
+    [Yellowboards]       INT         NOT NULL    DEFAULT 0,
+    [Redboards]          INT         NOT NULL    DEFAULT 0,
     [ModifiedDateUtc]   DATETIME2(7) NOT NULL   DEFAULT SYSUTCDATETIME(),
     CONSTRAINT [PK_GameTeamStats] PRIMARY KEY CLUSTERED ([GameTeamStatsId]),
     CONSTRAINT [FK_GameTeamStats_Game] FOREIGN KEY ([GameId])
@@ -188,8 +188,8 @@ CREATE TABLE [dbo].[GameTeamStats]
         REFERENCES [dbo].[Team]([TeamId]),
     CONSTRAINT [UQ_GameTeamStats_GameTeam] UNIQUE ([GameId], [TeamId]),
     CONSTRAINT [CK_GameTeamStats_Score] CHECK ([Score] >= 0),
-    CONSTRAINT [CK_GameTeamStats_YellowCards] CHECK ([YellowCards] >= 0 AND [YellowCards] <= 3),
-    CONSTRAINT [CK_GameTeamStats_RedCards] CHECK ([RedCards] >= 0 AND [RedCards] <= 3)
+    CONSTRAINT [CK_GameTeamStats_Yellowboards] CHECK ([Yellowboards] >= 0 AND [Yellowboards] <= 3),
+    CONSTRAINT [CK_GameTeamStats_Redboards] CHECK ([Redboards] >= 0 AND [Redboards] <= 3)
 );
 GO
 
@@ -199,7 +199,7 @@ GO
 
 -- Sport: Soccer
 SET IDENTITY_INSERT [dbo].[Sport] ON;
-INSERT INTO [dbo].[Sport] ([SportId], [SportName], [SportCode], [HalvesCount], [PeriodName], [HasCards], [HasTimer], [TimerDirection], [DefaultPeriodLengthSeconds])
+INSERT INTO [dbo].[Sport] ([SportId], [SportName], [SportCode], [HalvesCount], [PeriodName], [Hasboards], [HasTimer], [TimerDirection], [DefaultPeriodLengthSeconds])
 VALUES (1, N'Soccer', 'SOC', 2, N'Half', 1, 1, 'UP', 2700);
 SET IDENTITY_INSERT [dbo].[Sport] OFF;
 GO

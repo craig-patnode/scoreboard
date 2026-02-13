@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Scorecard.Api.Data.Entities;
+namespace Scoreboard.Api.Data.Entities;
 
 [Table("Sport")]
 public class Sport

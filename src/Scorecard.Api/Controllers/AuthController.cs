@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using Scorecard.Api.Services;
-using Scorecard.Shared.DTOs;
+using Scoreboard.Api.Services;
+using Scoreboard.Shared.DTOs;
 
-namespace Scorecard.Api.Controllers;
+namespace Scoreboard.Api.Controllers;
 
 [ApiController]
 [Route("api/auth")]

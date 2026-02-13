@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.SignalR;
-using Scorecard.Api.Services;
-using Scorecard.Shared.DTOs;
+using Scoreboard.Api.Services;
+using Scoreboard.Shared.DTOs;
 
-namespace Scorecard.Api.Hubs;
+namespace Scoreboard.Api.Hubs;
 
 /// <summary>
 /// SignalR hub for real-time game state updates.

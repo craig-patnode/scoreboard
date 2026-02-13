@@ -84,7 +84,7 @@
         .timer-controls { display: flex; gap: 5px; margin-bottom: 6px; }
         .timer-mode { font-size: 10px; color: #888; margin-top: 4px; }
 
-        /* Cards */
+        /* boards */
         .control-row { display: flex; align-items: center; gap: 5px; margin-bottom: 6px; justify-content: center; }
 
         /* Buttons */
@@ -135,7 +135,7 @@
 <body>
     <!-- LOGIN SCREEN -->
     <div class="login-screen" id="loginScreen">
-        <h2>⚽ Scorecard Login</h2>
+        <h2>⚽ Scoreboard Login</h2>
         <input type="email" id="loginEmail" placeholder="Email Address" />
         <input type="password" id="loginPassword" placeholder="Password" />
         <button onclick="login()">Sign In</button>
@@ -187,14 +187,14 @@
                         </div>
                         <div style="margin-top: 8px;">
                             <div class="control-row">
-                                <button class="btn-light-warning btn-sm" onclick="changeCard('home','yellow',1)">+1</button>
+                                <button class="btn-light-warning btn-sm" onclick="changeboard('home','yellow',1)">+1</button>
                                 <input id="homeYellowInput" class="mini" readonly />
-                                <button class="btn-light-warning btn-sm" onclick="changeCard('home','yellow',-1)">-1</button>
+                                <button class="btn-light-warning btn-sm" onclick="changeboard('home','yellow',-1)">-1</button>
                             </div>
                             <div class="control-row">
-                                <button class="btn-danger btn-sm" onclick="changeCard('home','red',1)">+1</button>
+                                <button class="btn-danger btn-sm" onclick="changeboard('home','red',1)">+1</button>
                                 <input id="homeRedInput" class="mini" readonly />
-                                <button class="btn-danger btn-sm" onclick="changeCard('home','red',-1)">-1</button>
+                                <button class="btn-danger btn-sm" onclick="changeboard('home','red',-1)">-1</button>
                             </div>
                         </div>
                     </div>
@@ -233,14 +233,14 @@
                         </div>
                         <div style="margin-top: 8px;">
                             <div class="control-row">
-                                <button class="btn-light-warning btn-sm" onclick="changeCard('away','yellow',1)">+1</button>
+                                <button class="btn-light-warning btn-sm" onclick="changeboard('away','yellow',1)">+1</button>
                                 <input id="awayYellowInput" class="mini" readonly />
-                                <button class="btn-light-warning btn-sm" onclick="changeCard('away','yellow',-1)">-1</button>
+                                <button class="btn-light-warning btn-sm" onclick="changeboard('away','yellow',-1)">-1</button>
                             </div>
                             <div class="control-row">
-                                <button class="btn-danger btn-sm" onclick="changeCard('away','red',1)">+1</button>
+                                <button class="btn-danger btn-sm" onclick="changeboard('away','red',1)">+1</button>
                                 <input id="awayRedInput" class="mini" readonly />
-                                <button class="btn-danger btn-sm" onclick="changeCard('away','red',-1)">-1</button>
+                                <button class="btn-danger btn-sm" onclick="changeboard('away','red',-1)">-1</button>
                             </div>
                         </div>
                     </div>
@@ -318,7 +318,7 @@
             const base = window.location.origin;
             document.getElementById('obsUrlList').innerHTML = `
                 <div class="obs-url-row"><span>Pre-Game:</span> <code>${base}/overlay/pregame.html?key=${streamKey}</code></div>
-                <div class="obs-url-row"><span>Scorecard:</span> <code>${base}/overlay/scorecard.html?key=${streamKey}</code></div>
+                <div class="obs-url-row"><span>Scoreboard:</span> <code>${base}/overlay/scoreboard.html?key=${streamKey}</code></div>
                 <div class="obs-url-row"><span>Half Time:</span> <code>${base}/overlay/halftime.html?key=${streamKey}</code></div>
                 <div class="obs-url-row"><span>Full Time:</span> <code>${base}/overlay/fulltime.html?key=${streamKey}</code></div>
             `;
@@ -435,10 +435,10 @@
 
             document.getElementById('homeScoreDisplay').textContent = state.homeScore;
             document.getElementById('awayScoreDisplay').textContent = state.awayScore;
-            document.getElementById('homeYellowInput').value = state.homeYellowCards;
-            document.getElementById('homeRedInput').value = state.homeRedCards;
-            document.getElementById('awayYellowInput').value = state.awayYellowCards;
-            document.getElementById('awayRedInput').value = state.awayRedCards;
+            document.getElementById('homeYellowInput').value = state.homeYellowboards;
+            document.getElementById('homeRedInput').value = state.homeRedboards;
+            document.getElementById('awayYellowInput').value = state.awayYellowboards;
+            document.getElementById('awayRedInput').value = state.awayRedboards;
 
             const secs = computeTimer(state);
             document.getElementById('timerDisplay').textContent = formatTime(secs);
@@ -477,12 +477,12 @@
             await apiPost(`score/${team}`, { score: Math.max(0, current + delta) });
         }
 
-        async function changeCard(team, cardType, delta) {
+        async function changeboard(team, boardType, delta) {
             if (!lastState) return;
             let current;
-            if (team === 'home') current = cardType === 'yellow' ? lastState.homeYellowCards : lastState.homeRedCards;
-            else current = cardType === 'yellow' ? lastState.awayYellowCards : lastState.awayRedCards;
-            await apiPost(`cards/${team}/${cardType}`, { count: Math.max(0, current + delta) });
+            if (team === 'home') current = boardType === 'yellow' ? lastState.homeYellowboards : lastState.homeRedboards;
+            else current = boardType === 'yellow' ? lastState.awayYellowboards : lastState.awayRedboards;
+            await apiPost(`boards/${team}/${boardType}`, { count: Math.max(0, current + delta) });
         }
 
         async function updateTeamNames() {

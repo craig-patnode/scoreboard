@@ -13,13 +13,13 @@
             animation: expandIn 0.8s ease-out forwards;
         }
         @keyframes expandIn { to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
-        .fulltime-card {
+        .fulltime-board {
             background: linear-gradient(180deg, #05295d 0%, #002244 50%, #05295d 100%);
             border: 3px solid #FFD700; border-radius: 12px;
             padding: 40px 60px; text-align: center; min-width: 500px;
             position: relative; overflow: hidden;
         }
-        .fulltime-card::before {
+        .fulltime-board::before {
             content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
             background: radial-gradient(circle, rgba(255,215,0,0.1) 0%, transparent 50%);
             animation: glow 3s ease-in-out infinite;
@@ -45,11 +45,11 @@
             text-shadow: 0 0 30px rgba(255,215,0,0.5);
         }
         .ft-separator { font-size: 56px; color: #ffffff; font-weight: 900; }
-        .ft-cards { display: flex; gap: 8px; align-items: center; justify-content: center; margin-top: 8px; }
-        .ft-card-icon { width: 14px; height: 18px; border-radius: 1px; display: inline-block; }
+        .ft-boards { display: flex; gap: 8px; align-items: center; justify-content: center; margin-top: 8px; }
+        .ft-board-icon { width: 14px; height: 18px; border-radius: 1px; display: inline-block; }
         .ft-yellow { background: #FFD700; }
         .ft-red { background: #DC143C; }
-        .ft-card-count { font-size: 16px; color: #ccc; font-weight: 600; }
+        .ft-board-count { font-size: 16px; color: #ccc; font-weight: 600; }
         .winner-badge {
             display: none; margin-top: 20px; font-size: 14px; color: #FFD700;
             letter-spacing: 3px; text-transform: uppercase; position: relative; z-index: 1;
@@ -60,14 +60,14 @@
 </head>
 <body>
     <div class="fulltime-container">
-        <div class="fulltime-card">
+        <div class="fulltime-board">
             <div class="fulltime-label">Full Time</div>
             <div class="score-row">
                 <div class="ft-team">
                     <div class="ft-team-name" id="homeTeamName">HOME</div>
-                    <div class="ft-cards">
-                        <span class="ft-card-icon ft-yellow"></span><span class="ft-card-count" id="homeYellow">0</span>
-                        <span class="ft-card-icon ft-red"></span><span class="ft-card-count" id="homeRed">0</span>
+                    <div class="ft-boards">
+                        <span class="ft-board-icon ft-yellow"></span><span class="ft-board-count" id="homeYellow">0</span>
+                        <span class="ft-board-icon ft-red"></span><span class="ft-board-count" id="homeRed">0</span>
                     </div>
                 </div>
                 <div class="ft-score" id="homeScore">0</div>
@@ -75,9 +75,9 @@
                 <div class="ft-score" id="awayScore">0</div>
                 <div class="ft-team">
                     <div class="ft-team-name" id="awayTeamName">OPPONENT</div>
-                    <div class="ft-cards">
-                        <span class="ft-card-icon ft-yellow"></span><span class="ft-card-count" id="awayYellow">0</span>
-                        <span class="ft-card-icon ft-red"></span><span class="ft-card-count" id="awayRed">0</span>
+                    <div class="ft-boards">
+                        <span class="ft-board-icon ft-yellow"></span><span class="ft-board-count" id="awayYellow">0</span>
+                        <span class="ft-board-icon ft-red"></span><span class="ft-board-count" id="awayRed">0</span>
                     </div>
                 </div>
             </div>
@@ -94,10 +94,10 @@
             document.getElementById('awayTeamName').textContent = state.awayTeamName || 'OPPONENT';
             document.getElementById('homeScore').textContent = state.homeScore || 0;
             document.getElementById('awayScore').textContent = state.awayScore || 0;
-            document.getElementById('homeYellow').textContent = state.homeYellowCards || 0;
-            document.getElementById('homeRed').textContent = state.homeRedCards || 0;
-            document.getElementById('awayYellow').textContent = state.awayYellowCards || 0;
-            document.getElementById('awayRed').textContent = state.awayRedCards || 0;
+            document.getElementById('homeYellow').textContent = state.homeYellowboards || 0;
+            document.getElementById('homeRed').textContent = state.homeRedboards || 0;
+            document.getElementById('awayYellow').textContent = state.awayYellowboards || 0;
+            document.getElementById('awayRed').textContent = state.awayRedboards || 0;
 
             const badge = document.getElementById('winnerBadge');
             const hs = state.homeScore || 0, as_ = state.awayScore || 0;

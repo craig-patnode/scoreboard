@@ -1,11 +1,11 @@
 using Microsoft.EntityFrameworkCore;
-using Scorecard.Api.Data.Entities;
+using Scoreboard.Api.Data.Entities;
 
-namespace Scorecard.Api.Data;
+namespace Scoreboard.Api.Data;
 
-public class ScorecardDbContext : DbContext
+public class ScoreboardDbContext : DbContext
 {
-    public ScorecardDbContext(DbContextOptions<ScorecardDbContext> options) : base(options) { }
+    public ScoreboardDbContext(DbContextOptions<ScoreboardDbContext> options) : base(options) { }
 
     public DbSet<Sport> Sports => Set<Sport>();
     public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();

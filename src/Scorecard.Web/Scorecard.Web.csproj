@@ -4,7 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>Scorecard.Web</RootNamespace>
+    <RootNamespace>Scoreboard.Web</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Scorecard.Shared\Scorecard.Shared.csproj" />
+    <ProjectReference Include="..\Scoreboard.Shared\Scoreboard.Shared.csproj" />
   </ItemGroup>
 
 </Project>

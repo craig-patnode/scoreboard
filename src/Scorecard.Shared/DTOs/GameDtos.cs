@@ -1,6 +1,6 @@
-using Scorecard.Shared.Enums;
+using Scoreboard.Shared.Enums;
 
-namespace Scorecard.Shared.DTOs;
+namespace Scoreboard.Shared.DTOs;
 
 /// <summary>
 /// The complete game state sent to overlays via SignalR.
@@ -20,8 +20,8 @@ public class GameStateDto
     public string HomeNumberColor { get; set; } = "#FFFFFF";
     public string? HomeLogoUrl { get; set; }
     public int HomeScore { get; set; }
-    public int HomeYellowCards { get; set; }
-    public int HomeRedCards { get; set; }
+    public int HomeYellowboards { get; set; }
+    public int HomeRedboards { get; set; }
 
     // Away Team
     public int AwayTeamId { get; set; }
@@ -31,8 +31,8 @@ public class GameStateDto
     public string AwayNumberColor { get; set; } = "#003366";
     public string? AwayLogoUrl { get; set; }
     public int AwayScore { get; set; }
-    public int AwayYellowCards { get; set; }
-    public int AwayRedCards { get; set; }
+    public int AwayYellowboards { get; set; }
+    public int AwayRedboards { get; set; }
 
     // Timer - client computes current time from these fields
     public bool IsTimerRunning { get; set; }
@@ -71,7 +71,7 @@ public class GameStateDto
     // Sport config
     public string SportName { get; set; } = "Soccer";
     public string SportCode { get; set; } = "SOC";
-    public bool HasCards { get; set; } = true;
+    public bool Hasboards { get; set; } = true;
     public bool HasTimer { get; set; } = true;
     public int DefaultPeriodLengthSeconds { get; set; } = 2700;
 }
@@ -85,9 +85,9 @@ public class UpdateScoreRequest
 }
 
 /// <summary>
-/// Request to update a team's card count
+/// Request to update a team's board count
 /// </summary>
-public class UpdateCardsRequest
+public class UpdateboardsRequest
 {
     public int Count { get; set; }
 }
