@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Full Time Overlay</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: transparent; font-family: 'Assistant', 'Segoe UI', 'Arial', sans-serif; overflow: hidden; }
+        .fulltime-container {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8);
+            filter: drop-shadow(0 8px 30px rgba(0, 0, 0, 0.7));
+            animation: expandIn 0.8s ease-out forwards;
+        }
+        @keyframes expandIn { to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+        .fulltime-card {
+            background: linear-gradient(180deg, #05295d 0%, #002244 50%, #05295d 100%);
+            border: 3px solid #FFD700; border-radius: 12px;
+            padding: 40px 60px; text-align: center; min-width: 500px;
+            position: relative; overflow: hidden;
+        }
+        .fulltime-card::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,215,0,0.1) 0%, transparent 50%);
+            animation: glow 3s ease-in-out infinite;
+        }
+        @keyframes glow { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+        .fulltime-label {
+            font-size: 20px; color: #FFD700; text-transform: uppercase;
+            letter-spacing: 8px; margin-bottom: 25px; font-weight: 900;
+            position: relative; z-index: 1; text-shadow: 0 0 20px rgba(255,215,0,0.5);
+        }
+        .score-row {
+            display: flex; align-items: center; justify-content: center;
+            gap: 25px; position: relative; z-index: 1;
+        }
+        .ft-team { text-align: center; min-width: 140px; }
+        .ft-team-name {
+            font-size: 20px; font-weight: 900; color: #ffffff; text-transform: uppercase;
+            font-family: 'Arial Black', 'Impact', sans-serif; margin-bottom: 8px;
+        }
+        .ft-score {
+            font-size: 56px; font-weight: 900; color: #FFD700;
+            font-family: 'Arial Black', sans-serif;
+            text-shadow: 0 0 30px rgba(255,215,0,0.5);
+        }
+        .ft-separator { font-size: 56px; color: #ffffff; font-weight: 900; }
+        .ft-cards { display: flex; gap: 8px; align-items: center; justify-content: center; margin-top: 8px; }
+        .ft-card-icon { width: 14px; height: 18px; border-radius: 1px; display: inline-block; }
+        .ft-yellow { background: #FFD700; }
+        .ft-red { background: #DC143C; }
+        .ft-card-count { font-size: 16px; color: #ccc; font-weight: 600; }
+        .winner-badge {
+            display: none; margin-top: 20px; font-size: 14px; color: #FFD700;
+            letter-spacing: 3px; text-transform: uppercase; position: relative; z-index: 1;
+        }
+        .winner-badge.show { display: block; animation: fadeIn 1s ease-out 0.5s both; }
+        @keyframes fadeIn { to { opacity: 1; } }
+    </style>
+</head>
+<body>
+    <div class="fulltime-container">
+        <div class="fulltime-card">
+            <div class="fulltime-label">Full Time</div>
+            <div class="score-row">
+                <div class="ft-team">
+                    <div class="ft-team-name" id="homeTeamName">HOME</div>
+                    <div class="ft-cards">
+                        <span class="ft-card-icon ft-yellow"></span><span class="ft-card-count" id="homeYellow">0</span>
+                        <span class="ft-card-icon ft-red"></span><span class="ft-card-count" id="homeRed">0</span>
+                    </div>
+                </div>
+                <div class="ft-score" id="homeScore">0</div>
+                <div class="ft-separator">-</div>
+                <div class="ft-score" id="awayScore">0</div>
+                <div class="ft-team">
+                    <div class="ft-team-name" id="awayTeamName">OPPONENT</div>
+                    <div class="ft-cards">
+                        <span class="ft-card-icon ft-yellow"></span><span class="ft-card-count" id="awayYellow">0</span>
+                        <span class="ft-card-icon ft-red"></span><span class="ft-card-count" id="awayRed">0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="winner-badge" id="winnerBadge"></div>
+        </div>
+    </div>
+
+    <script>
+        const pathParts = window.location.pathname.split('/');
+        const streamKey = pathParts[pathParts.length - 1] || new URLSearchParams(window.location.search).get('key');
+
+        function updateFullTime(state) {
+            document.getElementById('homeTeamName').textContent = state.homeTeamName || 'HOME';
+            document.getElementById('awayTeamName').textContent = state.awayTeamName || 'OPPONENT';
+            document.getElementById('homeScore').textContent = state.homeScore || 0;
+            document.getElementById('awayScore').textContent = state.awayScore || 0;
+            document.getElementById('homeYellow').textContent = state.homeYellowCards || 0;
+            document.getElementById('homeRed').textContent = state.homeRedCards || 0;
+            document.getElementById('awayYellow').textContent = state.awayYellowCards || 0;
+            document.getElementById('awayRed').textContent = state.awayRedCards || 0;
+
+            const badge = document.getElementById('winnerBadge');
+            const hs = state.homeScore || 0, as_ = state.awayScore || 0;
+            if (hs > as_) { badge.textContent = `🏆 ${state.homeTeamName} Wins!`; badge.classList.add('show'); }
+            else if (as_ > hs) { badge.textContent = `🏆 ${state.awayTeamName} Wins!`; badge.classList.add('show'); }
+            else { badge.textContent = 'Draw'; badge.classList.add('show'); }
+        }
+
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl(`${window.location.origin}/hubs/game`)
+            .withAutomaticReconnect()
+            .build();
+
+        connection.on("GameStateUpdated", updateFullTime);
+        connection.onreconnected(() => { if (streamKey) connection.invoke("JoinStream", streamKey); });
+        connection.start().then(() => { if (streamKey) connection.invoke("JoinStream", streamKey); })
+            .catch(() => setTimeout(() => location.reload(), 5000));
+    </script>
+</body>
+</html>
