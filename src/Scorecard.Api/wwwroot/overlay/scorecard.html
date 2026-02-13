@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scorecard Overlay</title>
+    <title>Scoreboard Overlay</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -93,14 +93,14 @@
         }
         .score.updated { animation: scoreFlash 0.4s ease-out; }
 
-        .cards { display: flex; gap: 10px; font-size: 12px; margin-top: 4px; margin-left: 45px; }
-        .card-indicator { display: flex; align-items: center; gap: 3px; color: #000000; font-weight: 600; transition: color 1.2s ease-in-out; }
-        .card-indicator.home-jersey { color: #ffffff; }
-        .card-indicator.away-jersey { color: #003366; }
-        .card-icon { width: 15px; height: 17px; border-radius: 1px; display: inline-block; }
-        .yellow-card { background: #FFD700; }
-        .red-card { background: #DC143C; }
-        .card-count { font-size: 20px; }
+        .boards { display: flex; gap: 10px; font-size: 12px; margin-top: 4px; margin-left: 45px; }
+        .board-indicator { display: flex; align-items: center; gap: 3px; color: #000000; font-weight: 600; transition: color 1.2s ease-in-out; }
+        .board-indicator.home-jersey { color: #ffffff; }
+        .board-indicator.away-jersey { color: #003366; }
+        .board-icon { width: 15px; height: 17px; border-radius: 1px; display: inline-block; }
+        .yellow-board { background: #FFD700; }
+        .red-board { background: #DC143C; }
+        .board-count { font-size: 20px; }
 
         .status-indicator {
             position: absolute; bottom: 20px; left: 20px; width: 10px; height: 10px;
@@ -131,14 +131,14 @@
                     <div class="team-name-wrapper">
                         <div class="team-name" id="homeTeamName" style="margin-left: 30px;">HOME</div>
                     </div>
-                    <div class="cards" id="homeCards">
-                        <div class="card-indicator" id="homeYellowIndicator">
-                            <span class="card-icon yellow-card"></span>
-                            <span id="homeYellow" class="card-count">0</span>
+                    <div class="boards" id="homeboards">
+                        <div class="board-indicator" id="homeYellowIndicator">
+                            <span class="board-icon yellow-board"></span>
+                            <span id="homeYellow" class="board-count">0</span>
                         </div>
-                        <div class="card-indicator" id="homeRedIndicator">
-                            <span class="card-icon red-card"></span>
-                            <span id="homeRed" class="card-count">0</span>
+                        <div class="board-indicator" id="homeRedIndicator">
+                            <span class="board-icon red-board"></span>
+                            <span id="homeRed" class="board-count">0</span>
                         </div>
                     </div>
                 </div>
@@ -151,14 +151,14 @@
                     <div class="team-name-wrapper">
                         <div class="team-name" id="awayTeamName" style="margin-left: -45px;">OPPONENT</div>
                     </div>
-                    <div class="cards" style="margin-left: -45px;">
-                        <div class="card-indicator" id="awayYellowIndicator">
-                            <span class="card-icon yellow-card"></span>
-                            <span id="awayYellow" class="card-count">0</span>
+                    <div class="boards" style="margin-left: -45px;">
+                        <div class="board-indicator" id="awayYellowIndicator">
+                            <span class="board-icon yellow-board"></span>
+                            <span id="awayYellow" class="board-count">0</span>
                         </div>
-                        <div class="card-indicator" id="awayRedIndicator">
-                            <span class="card-icon red-card"></span>
-                            <span id="awayRed" class="card-count">0</span>
+                        <div class="board-indicator" id="awayRedIndicator">
+                            <span class="board-icon red-board"></span>
+                            <span id="awayRed" class="board-count">0</span>
                         </div>
                     </div>
                 </div>
@@ -168,7 +168,7 @@
     <div class="status-indicator" id="statusIndicator"></div>
 
     <script>
-        // Extract streamKey from URL: /overlay/scorecard/{streamKey}
+        // Extract streamKey from URL: /overlay/scoreboard/{streamKey}
         const pathParts = window.location.pathname.split('/');
         const streamKey = pathParts[pathParts.length - 1] || new URLSearchParams(window.location.search).get('key');
         
@@ -269,11 +269,11 @@
                 if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
             }
 
-            // Cards
-            elements.homeYellow.textContent = state.homeYellowCards || 0;
-            elements.homeRed.textContent = state.homeRedCards || 0;
-            elements.awayYellow.textContent = state.awayYellowCards || 0;
-            elements.awayRed.textContent = state.awayRedCards || 0;
+            // boards
+            elements.homeYellow.textContent = state.homeYellowboards || 0;
+            elements.homeRed.textContent = state.homeRedboards || 0;
+            elements.awayYellow.textContent = state.awayYellowboards || 0;
+            elements.awayRed.textContent = state.awayRedboards || 0;
 
             // Jersey colors (dynamic)
             applyJerseyColor(elements.metallicStripeHome, state.homeJerseyColor, true);

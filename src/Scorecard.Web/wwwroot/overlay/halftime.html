@@ -15,7 +15,7 @@
         }
         @keyframes fadeSlideIn { to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
 
-        .halftime-card {
+        .halftime-board {
             background: linear-gradient(180deg, #1a1a1a 0%, #2a2a2a 50%, #1a1a1a 100%);
             border: 2px solid #FFD700; border-radius: 12px;
             padding: 35px 50px; text-align: center; min-width: 450px;
@@ -38,24 +38,24 @@
         }
         .ht-separator { font-size: 48px; color: #FFD700; font-weight: 900; }
 
-        .cards-row { display: flex; justify-content: center; gap: 40px; margin-top: 10px; }
-        .ht-cards { display: flex; gap: 8px; align-items: center; }
-        .ht-card-icon { width: 14px; height: 18px; border-radius: 1px; display: inline-block; }
+        .boards-row { display: flex; justify-content: center; gap: 40px; margin-top: 10px; }
+        .ht-boards { display: flex; gap: 8px; align-items: center; }
+        .ht-board-icon { width: 14px; height: 18px; border-radius: 1px; display: inline-block; }
         .ht-yellow { background: #FFD700; }
         .ht-red { background: #DC143C; }
-        .ht-card-count { font-size: 16px; color: #ccc; font-weight: 600; }
+        .ht-board-count { font-size: 16px; color: #ccc; font-weight: 600; }
     </style>
 </head>
 <body>
     <div class="halftime-container">
-        <div class="halftime-card">
+        <div class="halftime-board">
             <div class="halftime-label">⚽ Half Time</div>
             <div class="score-row">
                 <div class="ht-team">
                     <div class="ht-team-name" id="homeTeamName">HOME</div>
-                    <div class="ht-cards">
-                        <span class="ht-card-icon ht-yellow"></span><span class="ht-card-count" id="homeYellow">0</span>
-                        <span class="ht-card-icon ht-red"></span><span class="ht-card-count" id="homeRed">0</span>
+                    <div class="ht-boards">
+                        <span class="ht-board-icon ht-yellow"></span><span class="ht-board-count" id="homeYellow">0</span>
+                        <span class="ht-board-icon ht-red"></span><span class="ht-board-count" id="homeRed">0</span>
                     </div>
                 </div>
                 <div>
@@ -67,9 +67,9 @@
                 </div>
                 <div class="ht-team">
                     <div class="ht-team-name" id="awayTeamName">OPPONENT</div>
-                    <div class="ht-cards">
-                        <span class="ht-card-icon ht-yellow"></span><span class="ht-card-count" id="awayYellow">0</span>
-                        <span class="ht-card-icon ht-red"></span><span class="ht-card-count" id="awayRed">0</span>
+                    <div class="ht-boards">
+                        <span class="ht-board-icon ht-yellow"></span><span class="ht-board-count" id="awayYellow">0</span>
+                        <span class="ht-board-icon ht-red"></span><span class="ht-board-count" id="awayRed">0</span>
                     </div>
                 </div>
             </div>
@@ -85,10 +85,10 @@
             document.getElementById('awayTeamName').textContent = state.awayTeamName || 'OPPONENT';
             document.getElementById('homeScore').textContent = state.homeScore || 0;
             document.getElementById('awayScore').textContent = state.awayScore || 0;
-            document.getElementById('homeYellow').textContent = state.homeYellowCards || 0;
-            document.getElementById('homeRed').textContent = state.homeRedCards || 0;
-            document.getElementById('awayYellow').textContent = state.awayYellowCards || 0;
-            document.getElementById('awayRed').textContent = state.awayRedCards || 0;
+            document.getElementById('homeYellow').textContent = state.homeYellowboards || 0;
+            document.getElementById('homeRed').textContent = state.homeRedboards || 0;
+            document.getElementById('awayYellow').textContent = state.awayYellowboards || 0;
+            document.getElementById('awayRed').textContent = state.awayRedboards || 0;
         }
 
         const connection = new signalR.HubConnectionBuilder()

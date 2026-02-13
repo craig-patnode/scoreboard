@@ -3,18 +3,18 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Scorecard.Api.Data;
-using Scorecard.Api.Data.Entities;
-using Scorecard.Shared.DTOs;
+using Scoreboard.Api.Data;
+using Scoreboard.Api.Data.Entities;
+using Scoreboard.Shared.DTOs;
 
-namespace Scorecard.Api.Services;
+namespace Scoreboard.Api.Services;
 
 public class AuthService
 {
-    private readonly ScorecardDbContext _db;
+    private readonly ScoreboardDbContext _db;
     private readonly IConfiguration _config;
 
-    public AuthService(ScorecardDbContext db, IConfiguration config)
+    public AuthService(ScoreboardDbContext db, IConfiguration config)
     {
         _db = db;
         _config = config;
@@ -129,7 +129,7 @@ public class AuthService
     private string GenerateJwtToken(Streamer streamer)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-            _config["Jwt:Key"] ?? "ScorecardDefaultSecretKeyThatShouldBeChanged123!"));
+            _config["Jwt:Key"] ?? "ScoreboardDefaultSecretKeyThatShouldBeChanged123!"));
 
         var claims = new[]
         {
@@ -141,8 +141,8 @@ public class AuthService
         };
 
         var token = new JwtSecurityToken(
-            issuer: _config["Jwt:Issuer"] ?? "Scorecard",
-            audience: _config["Jwt:Audience"] ?? "Scorecard",
+            issuer: _config["Jwt:Issuer"] ?? "Scoreboard",
+            audience: _config["Jwt:Audience"] ?? "Scoreboard",
             claims: claims,
             expires: DateTime.UtcNow.AddHours(24),
             signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256)

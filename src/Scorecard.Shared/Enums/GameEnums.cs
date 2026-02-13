@@ -1,4 +1,4 @@
-namespace Scorecard.Shared.Enums;
+namespace Scoreboard.Shared.Enums;
 
 public enum GameStatus
 {
@@ -14,7 +14,7 @@ public enum TimerDirection
     Down
 }
 
-public enum CardType
+public enum boardType
 {
     Yellow,
     Red

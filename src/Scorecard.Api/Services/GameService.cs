@@ -1,15 +1,15 @@
 using Microsoft.EntityFrameworkCore;
-using Scorecard.Api.Data;
-using Scorecard.Api.Data.Entities;
-using Scorecard.Shared.DTOs;
+using Scoreboard.Api.Data;
+using Scoreboard.Api.Data.Entities;
+using Scoreboard.Shared.DTOs;
 
-namespace Scorecard.Api.Services;
+namespace Scoreboard.Api.Services;
 
 public class GameService
 {
-    private readonly ScorecardDbContext _db;
+    private readonly ScoreboardDbContext _db;
 
-    public GameService(ScorecardDbContext db)
+    public GameService(ScoreboardDbContext db)
     {
         _db = db;
     }
@@ -60,8 +60,8 @@ public class GameService
             HomeNumberColor = game.HomeTeam?.NumberColor ?? "#FFFFFF",
             HomeLogoUrl = game.HomeTeam?.LogoUrl,
             HomeScore = homeStats?.Score ?? 0,
-            HomeYellowCards = homeStats?.YellowCards ?? 0,
-            HomeRedCards = homeStats?.RedCards ?? 0,
+            HomeYellowboards = homeStats?.Yellowboards ?? 0,
+            HomeRedboards = homeStats?.Redboards ?? 0,
 
             AwayTeamId = game.AwayTeamId,
             AwayTeamName = game.AwayTeam?.TeamName ?? "Opponent",
@@ -70,8 +70,8 @@ public class GameService
             AwayNumberColor = game.AwayTeam?.NumberColor ?? "#003366",
             AwayLogoUrl = game.AwayTeam?.LogoUrl,
             AwayScore = awayStats?.Score ?? 0,
-            AwayYellowCards = awayStats?.YellowCards ?? 0,
-            AwayRedCards = awayStats?.RedCards ?? 0,
+            AwayYellowboards = awayStats?.Yellowboards ?? 0,
+            AwayRedboards = awayStats?.Redboards ?? 0,
 
             IsTimerRunning = game.TimerIsRunning,
             TimerDirection = game.TimerDirection,
@@ -86,7 +86,7 @@ public class GameService
 
             SportName = game.Sport?.SportName ?? "Soccer",
             SportCode = game.Sport?.SportCode ?? "SOC",
-            HasCards = game.Sport?.HasCards ?? true,
+            Hasboards = game.Sport?.Hasboards ?? true,
             HasTimer = game.Sport?.HasTimer ?? true,
             DefaultPeriodLengthSeconds = game.Sport?.DefaultPeriodLengthSeconds ?? 2700
         };
@@ -261,9 +261,9 @@ public class GameService
         await _db.SaveChangesAsync();
     }
 
-    // ---- Card Operations ----
+    // ---- board Operations ----
 
-    public async Task UpdateCardsAsync(int streamerId, bool isHome, bool isYellow, int count)
+    public async Task UpdateboardsAsync(int streamerId, bool isHome, bool isYellow, int count)
     {
         var game = await GetActiveGameAsync(streamerId);
         if (game == null) return;
@@ -272,8 +272,8 @@ public class GameService
         if (stats == null) return;
 
         var clamped = Math.Clamp(count, 0, 3);
-        if (isYellow) stats.YellowCards = clamped;
-        else stats.RedCards = clamped;
+        if (isYellow) stats.Yellowboards = clamped;
+        else stats.Redboards = clamped;
 
         stats.ModifiedDateUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync();
@@ -323,8 +323,8 @@ public class GameService
         foreach (var stats in game.TeamStats)
         {
             stats.Score = 0;
-            stats.YellowCards = 0;
-            stats.RedCards = 0;
+            stats.Yellowboards = 0;
+            stats.Redboards = 0;
             stats.ModifiedDateUtc = DateTime.UtcNow;
         }
 

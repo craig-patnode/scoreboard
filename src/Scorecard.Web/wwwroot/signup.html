@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scorecard - Sign Up</title>
+    <title>Scoreboard - Sign Up</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Arial', sans-serif; background: #1a1a1a; color: #fff; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
 
         .signup-container { max-width: 420px; width: 100%; padding: 20px; }
 
-        .signup-card {
+        .signup-board {
             background: #2a2a2a; border-radius: 12px; padding: 30px;
             box-shadow: 0 4px 30px rgba(0,0,0,0.5);
         }
@@ -34,16 +34,16 @@
         }
         input:focus, select:focus { border-color: #4CAF50; outline: none; }
 
-        .plan-cards { display: flex; gap: 10px; margin-top: 10px; }
-        .plan-card {
+        .plan-boards { display: flex; gap: 10px; margin-top: 10px; }
+        .plan-board {
             flex: 1; padding: 15px; background: #333; border: 2px solid #444;
             border-radius: 8px; cursor: pointer; text-align: center; transition: all 0.2s;
         }
-        .plan-card.selected { border-color: #4CAF50; background: #1a3a1a; }
-        .plan-card h3 { font-size: 14px; color: #fff; margin-bottom: 5px; }
-        .plan-card .price { font-size: 22px; font-weight: bold; color: #4CAF50; }
-        .plan-card .period { font-size: 11px; color: #888; }
-        .plan-card .savings { font-size: 10px; color: #FFD700; margin-top: 5px; }
+        .plan-board.selected { border-color: #4CAF50; background: #1a3a1a; }
+        .plan-board h3 { font-size: 14px; color: #fff; margin-bottom: 5px; }
+        .plan-board .price { font-size: 22px; font-weight: bold; color: #4CAF50; }
+        .plan-board .period { font-size: 11px; color: #888; }
+        .plan-board .savings { font-size: 10px; color: #FFD700; margin-top: 5px; }
 
         .coupon-row { display: flex; gap: 8px; margin-top: 12px; }
         .coupon-row input { flex: 1; }
@@ -76,9 +76,9 @@
 </head>
 <body>
     <div class="signup-container">
-        <div class="signup-card">
+        <div class="signup-board">
             <div class="logo">
-                <h1>⚽ Scorecard</h1>
+                <h1>⚽ Scoreboard</h1>
                 <p>Live Streaming Scoreboard Overlays</p>
             </div>
 
@@ -103,13 +103,13 @@
             <!-- STEP 2: Plan Selection -->
             <div class="step" id="step2">
                 <label>Choose Your Plan</label>
-                <div class="plan-cards">
-                    <div class="plan-card selected" data-plan="MONTHLY" onclick="selectPlan(this, 'MONTHLY')">
+                <div class="plan-boards">
+                    <div class="plan-board selected" data-plan="MONTHLY" onclick="selectPlan(this, 'MONTHLY')">
                         <h3>Monthly</h3>
                         <div class="price">$9.99</div>
                         <div class="period">/month</div>
                     </div>
-                    <div class="plan-card" data-plan="YEARLY" onclick="selectPlan(this, 'YEARLY')">
+                    <div class="plan-board" data-plan="YEARLY" onclick="selectPlan(this, 'YEARLY')">
                         <h3>Yearly</h3>
                         <div class="price">$99.99</div>
                         <div class="period">/year</div>
@@ -133,20 +133,20 @@
             <div class="step" id="step3">
                 <div class="demo-notice">🧪 Payment is in test mode. No real charges.</div>
 
-                <label>Card Number</label>
-                <input type="text" id="cardNumber" placeholder="4242 4242 4242 4242" maxlength="19" />
+                <label>board Number</label>
+                <input type="text" id="boardNumber" placeholder="4242 4242 4242 4242" maxlength="19" />
                 <div class="cc-row">
                     <div>
                         <label>Expiry</label>
-                        <input type="text" id="cardExpiry" placeholder="MM/YY" maxlength="5" />
+                        <input type="text" id="boardExpiry" placeholder="MM/YY" maxlength="5" />
                     </div>
                     <div>
                         <label>CVC</label>
-                        <input type="text" id="cardCvc" placeholder="123" maxlength="4" />
+                        <input type="text" id="boardCvc" placeholder="123" maxlength="4" />
                     </div>
                 </div>
-                <label>Name on Card</label>
-                <input type="text" id="cardName" placeholder="Full name" />
+                <label>Name on board</label>
+                <input type="text" id="boardName" placeholder="Full name" />
 
                 <div class="error" id="step3Error"></div>
                 <button class="btn-submit" onclick="submitSignup()">🔒 Subscribe & Create Account</button>
@@ -157,7 +157,7 @@
             <div class="step" id="stepSuccess">
                 <div class="success-screen">
                     <div class="check">✅</div>
-                    <h2>Welcome to Scorecard!</h2>
+                    <h2>Welcome to Scoreboard!</h2>
                     <p>Your account has been created and you're all set to start streaming.</p>
                     <div class="stream-key" id="successStreamKey"></div>
                     <p style="font-size: 11px; color: #FFD700;">⚠️ Save your Stream Key — you'll need it for OBS setup.</p>
@@ -196,7 +196,7 @@
         }
 
         function selectPlan(el, plan) {
-            document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+            document.querySelectorAll('.plan-board').forEach(c => c.classList.remove('selected'));
             el.classList.add('selected');
             selectedPlan = plan;
         }

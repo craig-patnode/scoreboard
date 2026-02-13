@@ -2,11 +2,11 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
-using Scorecard.Api.Hubs;
-using Scorecard.Api.Services;
-using Scorecard.Shared.DTOs;
+using Scoreboard.Api.Hubs;
+using Scoreboard.Api.Services;
+using Scoreboard.Shared.DTOs;
 
-namespace Scorecard.Api.Controllers;
+namespace Scoreboard.Api.Controllers;
 
 [ApiController]
 [Route("api/game")]

@@ -1,14 +1,14 @@
-# ⚽ Scorecard - Live Streaming Scoreboard Overlays
+# ⚽ Scoreboard - Live Streaming Scoreboard Overlays
 
 Professional scoreboard overlays for OBS Studio live streams. Built for youth sports streamers.
 
 ## Architecture
 
 ```
-Scorecard.sln
+Scoreboard.sln
 ├── src/
-│   ├── Scorecard.Shared/        # Shared DTOs, Enums (reused by future MAUI app)
-│   ├── Scorecard.Api/           # ASP.NET Core API + SignalR Hub + Static Files
+│   ├── Scoreboard.Shared/        # Shared DTOs, Enums (reused by future MAUI app)
+│   ├── Scoreboard.Api/           # ASP.NET Core API + SignalR Hub + Static Files
 │   │   ├── Controllers/         # REST API endpoints
 │   │   ├── Hubs/               # SignalR GameHub for real-time updates
 │   │   ├── Services/           # Business logic (GameService, AuthService)
@@ -19,11 +19,11 @@ Scorecard.sln
 │   │       ├── controller.html # Streamer game controller
 │   │       └── overlay/        # OBS Browser Source overlays
 │   │           ├── pregame.html
-│   │           ├── scorecard.html
+│   │           ├── scoreboard.html
 │   │           ├── halftime.html
 │   │           └── fulltime.html
-│   ├── Scorecard.Web/          # Blazor components (future MAUI reuse)
-│   └── Scorecard.Database/     # SQL scripts (one per table, 3NF)
+│   ├── Scoreboard.Web/          # Blazor components (future MAUI reuse)
+│   └── Scoreboard.Database/     # SQL scripts (one per table, 3NF)
 │       ├── Tables/
 │       └── SeedData/
 ├── .github/workflows/          # CI/CD pipeline
@@ -47,8 +47,8 @@ Scorecard.sln
 
 ### 1. Clone & Build
 ```bash
-git clone https://github.com/craig-patnode/scorecard.git
-cd scorecard
+git clone https://github.com/craig-patnode/scoreboard.git
+cd scoreboard
 dotnet restore
 dotnet build
 ```
@@ -69,31 +69,31 @@ Run the SQL scripts in order against your SQL Server:
 Or use the provided script:
 ```bash
 # Using sqlcmd (adjust connection string)
-sqlcmd -S "(localdb)\MSSQLLocalDB" -d ScorecardDb -i src/Scorecard.Database/Tables/Sport.sql
+sqlcmd -S "(localdb)\MSSQLLocalDB" -d ScoreboardDb -i src/Scoreboard.Database/Tables/Sport.sql
 # ... repeat for each table, then seed data
 ```
 
 ### 3. Update Connection String
-Edit `src/Scorecard.Api/appsettings.Development.json`:
+Edit `src/Scoreboard.Api/appsettings.Development.json`:
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=ScorecardDb;Trusted_Connection=True;"
+    "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=ScoreboardDb;Trusted_Connection=True;"
   }
 }
 ```
 
 ### 4. Run Locally
 ```bash
-cd src/Scorecard.Api
+cd src/Scoreboard.Api
 dotnet run
 ```
 Navigate to `https://localhost:5001` (or the port shown in console).
 
 ### 5. Pilot Login
 Use the seeded pilot accounts:
-- **Craig**: craig@scorecard.live
-- **Dave**: dave@scorecard.live
+- **Craig**: craig@scoreboard.live
+- **Dave**: dave@scoreboard.live
 - Password: Set via signup or update the hash in the database
 
 ## Azure Deployment
@@ -104,21 +104,21 @@ Use the seeded pilot accounts:
 az login
 
 # Create Resource Group
-az group create --name rg-scorecard --location westus2
+az group create --name rg-scoreboard --location westus2
 
 # Create Azure SQL Server (serverless)
 az sql server create \
-  --name scorecard-sql \
-  --resource-group rg-scorecard \
+  --name scoreboard-sql \
+  --resource-group rg-scoreboard \
   --location westus2 \
   --admin-user scoreadmin \
   --admin-password "YourStrongPassword123!"
 
 # Create Database (serverless tier)
 az sql db create \
-  --resource-group rg-scorecard \
-  --server scorecard-sql \
-  --name ScorecardDb \
+  --resource-group rg-scoreboard \
+  --server scoreboard-sql \
+  --name ScoreboardDb \
   --edition GeneralPurpose \
   --compute-model Serverless \
   --family Gen5 \
@@ -127,31 +127,31 @@ az sql db create \
 
 # Allow Azure services
 az sql server firewall-rule create \
-  --resource-group rg-scorecard \
-  --server scorecard-sql \
+  --resource-group rg-scoreboard \
+  --server scoreboard-sql \
   --name AllowAzure \
   --start-ip-address 0.0.0.0 \
   --end-ip-address 0.0.0.0
 
 # Create App Service Plan
 az appservice plan create \
-  --name scorecard-plan \
-  --resource-group rg-scorecard \
+  --name scoreboard-plan \
+  --resource-group rg-scoreboard \
   --sku B1 \
   --is-linux
 
 # Create Web App
 az webapp create \
-  --resource-group rg-scorecard \
-  --plan scorecard-plan \
-  --name scorecard-app \
+  --resource-group rg-scoreboard \
+  --plan scoreboard-plan \
+  --name scoreboard-app \
   --runtime "DOTNETCORE:8.0"
 
 # Set Connection String
 az webapp config connection-string set \
-  --resource-group rg-scorecard \
-  --name scorecard-app \
-  --settings DefaultConnection="Server=tcp:scorecard-sql.database.windows.net,1433;Database=ScorecardDb;User ID=scoreadmin;Password=YourStrongPassword123!;Encrypt=True;" \
+  --resource-group rg-scoreboard \
+  --name scoreboard-app \
+  --settings DefaultConnection="Server=tcp:scoreboard-sql.database.windows.net,1433;Database=ScoreboardDb;User ID=scoreadmin;Password=YourStrongPassword123!;Encrypt=True;" \
   --connection-string-type SQLAzure
 ```
 
@@ -167,7 +167,7 @@ Connect to Azure SQL via SSMS or Azure Data Studio and run all table scripts + s
 
 In OBS Studio, add a Browser Source for each overlay:
 1. **Pre-Game**: `https://your-app.azurewebsites.net/overlay/pregame.html?key=YOUR_STREAM_KEY`
-2. **Scorecard**: `https://your-app.azurewebsites.net/overlay/scorecard.html?key=YOUR_STREAM_KEY`
+2. **Scoreboard**: `https://your-app.azurewebsites.net/overlay/scoreboard.html?key=YOUR_STREAM_KEY`
 3. **Half Time**: `https://your-app.azurewebsites.net/overlay/halftime.html?key=YOUR_STREAM_KEY`
 4. **Full Time**: `https://your-app.azurewebsites.net/overlay/fulltime.html?key=YOUR_STREAM_KEY`
 
