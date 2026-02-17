@@ -15,24 +15,24 @@ public class GameStateDto
     // Home Team
     public int HomeTeamId { get; set; }
     public string HomeTeamName { get; set; } = "Home";
-    public string? HomeTeamShortName { get; set; }
+    public string HomeTeamCode { get; set; } = "HOME";
     public string HomeJerseyColor { get; set; } = "#8B0000";
     public string HomeNumberColor { get; set; } = "#FFFFFF";
     public string? HomeLogoUrl { get; set; }
     public int HomeScore { get; set; }
-    public int HomeYellowboards { get; set; }
-    public int HomeRedboards { get; set; }
+    public int HomeYellowCards { get; set; }
+    public int HomeRedCards { get; set; }
 
     // Away Team
     public int AwayTeamId { get; set; }
     public string AwayTeamName { get; set; } = "Opponent";
-    public string? AwayTeamShortName { get; set; }
+    public string AwayTeamCode { get; set; } = "OPP";
     public string AwayJerseyColor { get; set; } = "#FFFFFF";
     public string AwayNumberColor { get; set; } = "#003366";
     public string? AwayLogoUrl { get; set; }
     public int AwayScore { get; set; }
-    public int AwayYellowboards { get; set; }
-    public int AwayRedboards { get; set; }
+    public int AwayYellowCards { get; set; }
+    public int AwayRedCards { get; set; }
 
     // Timer - client computes current time from these fields
     public bool IsTimerRunning { get; set; }
@@ -71,7 +71,7 @@ public class GameStateDto
     // Sport config
     public string SportName { get; set; } = "Soccer";
     public string SportCode { get; set; } = "SOC";
-    public bool Hasboards { get; set; } = true;
+    public bool HasCards { get; set; } = true;
     public bool HasTimer { get; set; } = true;
     public int DefaultPeriodLengthSeconds { get; set; } = 2700;
 }
@@ -85,9 +85,9 @@ public class UpdateScoreRequest
 }
 
 /// <summary>
-/// Request to update a team's board count
+/// Request to update a team's card count
 /// </summary>
-public class UpdateboardsRequest
+public class UpdateCardsRequest
 {
     public int Count { get; set; }
 }
@@ -114,6 +114,16 @@ public class SetTimerModeRequest
 public class UpdateTeamNameRequest
 {
     public string Name { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Request to update team appearance (jersey color, number color, logo)
+/// </summary>
+public class UpdateTeamAppearanceRequest
+{
+    public string? JerseyColor { get; set; }
+    public string? NumberColor { get; set; }
+    public string? LogoData { get; set; }  // Base64 data URI (e.g., "data:image/png;base64,...")
 }
 
 /// <summary>

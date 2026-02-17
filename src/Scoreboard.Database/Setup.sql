@@ -1,19 +1,25 @@
 -- ============================================
--- Scoreboard Database Setup Script
--- Run this script to create all tables and seed data
+-- Scorecard Database Setup Script
+-- Safe to re-run (drops and recreates)
 -- ============================================
+SET ANSI_NULLS ON;
+GO
+SET QUOTED_IDENTIFIER ON;
+GO
 
--- Create database (run separately if needed)
--- CREATE DATABASE [ScoreboardDb];
--- GO
--- USE [ScoreboardDb];
--- GO
+-- Drop in reverse dependency order
+IF OBJECT_ID(N'dbo.GameTeamStats', N'U') IS NOT NULL DROP TABLE [dbo].[GameTeamStats];
+IF OBJECT_ID(N'dbo.Game', N'U') IS NOT NULL DROP TABLE [dbo].[Game];
+IF OBJECT_ID(N'dbo.Team', N'U') IS NOT NULL DROP TABLE [dbo].[Team];
+IF OBJECT_ID(N'dbo.Streamer', N'U') IS NOT NULL DROP TABLE [dbo].[Streamer];
+IF OBJECT_ID(N'dbo.Discount', N'U') IS NOT NULL DROP TABLE [dbo].[Discount];
+IF OBJECT_ID(N'dbo.SubscriptionPlan', N'U') IS NOT NULL DROP TABLE [dbo].[SubscriptionPlan];
+IF OBJECT_ID(N'dbo.Sport', N'U') IS NOT NULL DROP TABLE [dbo].[Sport];
+GO
 
 -- ============================================
--- TABLES (in dependency order)
--- ============================================
-
 -- 1. Sport
+-- ============================================
 CREATE TABLE [dbo].[Sport]
 (
     [SportId]       INT             NOT NULL    IDENTITY(1,1),
@@ -21,7 +27,7 @@ CREATE TABLE [dbo].[Sport]
     [SportCode]     VARCHAR(10)     NOT NULL,
     [HalvesCount]   INT             NOT NULL    DEFAULT 2,
     [PeriodName]    NVARCHAR(20)    NOT NULL    DEFAULT N'Half',
-    [Hasboards]      BIT             NOT NULL    DEFAULT 0,
+    [HasCards]      BIT             NOT NULL    DEFAULT 0,
     [HasTimer]      BIT             NOT NULL    DEFAULT 1,
     [TimerDirection] VARCHAR(4)     NOT NULL    DEFAULT 'UP',
     [DefaultPeriodLengthSeconds] INT NOT NULL   DEFAULT 2700,
@@ -33,7 +39,9 @@ CREATE TABLE [dbo].[Sport]
 );
 GO
 
+-- ============================================
 -- 2. SubscriptionPlan
+-- ============================================
 CREATE TABLE [dbo].[SubscriptionPlan]
 (
     [SubscriptionPlanId] INT            NOT NULL    IDENTITY(1,1),
@@ -51,7 +59,9 @@ CREATE TABLE [dbo].[SubscriptionPlan]
 );
 GO
 
+-- ============================================
 -- 3. Discount
+-- ============================================
 CREATE TABLE [dbo].[Discount]
 (
     [DiscountId]        INT             NOT NULL    IDENTITY(1,1),
@@ -77,7 +87,9 @@ CREATE TABLE [dbo].[Discount]
 );
 GO
 
+-- ============================================
 -- 4. Streamer
+-- ============================================
 CREATE TABLE [dbo].[Streamer]
 (
     [StreamerId]        INT             NOT NULL    IDENTITY(1,1),
@@ -107,7 +119,9 @@ CREATE TABLE [dbo].[Streamer]
 );
 GO
 
+-- ============================================
 -- 5. Team
+-- ============================================
 CREATE TABLE [dbo].[Team]
 (
     [TeamId]            INT             NOT NULL    IDENTITY(1,1),
@@ -130,7 +144,9 @@ CREATE TABLE [dbo].[Team]
 );
 GO
 
+-- ============================================
 -- 6. Game
+-- ============================================
 CREATE TABLE [dbo].[Game]
 (
     [GameId]            INT             NOT NULL    IDENTITY(1,1),
@@ -170,7 +186,9 @@ CREATE UNIQUE NONCLUSTERED INDEX [UX_Game_ActivePerStreamer]
     WHERE [IsActive] = 1 AND [GameStatus] <> 'FULLTIME';
 GO
 
+-- ============================================
 -- 7. GameTeamStats
+-- ============================================
 CREATE TABLE [dbo].[GameTeamStats]
 (
     [GameTeamStatsId]   INT         NOT NULL    IDENTITY(1,1),
@@ -178,8 +196,8 @@ CREATE TABLE [dbo].[GameTeamStats]
     [TeamId]            INT         NOT NULL,
     [IsHome]            BIT         NOT NULL    DEFAULT 0,
     [Score]             INT         NOT NULL    DEFAULT 0,
-    [Yellowboards]       INT         NOT NULL    DEFAULT 0,
-    [Redboards]          INT         NOT NULL    DEFAULT 0,
+    [YellowCards]       INT         NOT NULL    DEFAULT 0,
+    [RedCards]          INT         NOT NULL    DEFAULT 0,
     [ModifiedDateUtc]   DATETIME2(7) NOT NULL   DEFAULT SYSUTCDATETIME(),
     CONSTRAINT [PK_GameTeamStats] PRIMARY KEY CLUSTERED ([GameTeamStatsId]),
     CONSTRAINT [FK_GameTeamStats_Game] FOREIGN KEY ([GameId])
@@ -188,23 +206,20 @@ CREATE TABLE [dbo].[GameTeamStats]
         REFERENCES [dbo].[Team]([TeamId]),
     CONSTRAINT [UQ_GameTeamStats_GameTeam] UNIQUE ([GameId], [TeamId]),
     CONSTRAINT [CK_GameTeamStats_Score] CHECK ([Score] >= 0),
-    CONSTRAINT [CK_GameTeamStats_Yellowboards] CHECK ([Yellowboards] >= 0 AND [Yellowboards] <= 3),
-    CONSTRAINT [CK_GameTeamStats_Redboards] CHECK ([Redboards] >= 0 AND [Redboards] <= 3)
+    CONSTRAINT [CK_GameTeamStats_YellowCards] CHECK ([YellowCards] >= 0 AND [YellowCards] <= 3),
+    CONSTRAINT [CK_GameTeamStats_RedCards] CHECK ([RedCards] >= 0 AND [RedCards] <= 3)
 );
 GO
 
 -- ============================================
 -- SEED DATA
 -- ============================================
-
--- Sport: Soccer
 SET IDENTITY_INSERT [dbo].[Sport] ON;
-INSERT INTO [dbo].[Sport] ([SportId], [SportName], [SportCode], [HalvesCount], [PeriodName], [Hasboards], [HasTimer], [TimerDirection], [DefaultPeriodLengthSeconds])
+INSERT INTO [dbo].[Sport] ([SportId], [SportName], [SportCode], [HalvesCount], [PeriodName], [HasCards], [HasTimer], [TimerDirection], [DefaultPeriodLengthSeconds])
 VALUES (1, N'Soccer', 'SOC', 2, N'Half', 1, 1, 'UP', 2700);
 SET IDENTITY_INSERT [dbo].[Sport] OFF;
 GO
 
--- Subscription Plans
 SET IDENTITY_INSERT [dbo].[SubscriptionPlan] ON;
 INSERT INTO [dbo].[SubscriptionPlan] ([SubscriptionPlanId], [PlanName], [PlanCode], [PriceAmount], [BillingIntervalMonths], [DiscountPercent])
 VALUES
@@ -213,12 +228,12 @@ VALUES
 SET IDENTITY_INSERT [dbo].[SubscriptionPlan] OFF;
 GO
 
--- Pilot Discount
 SET IDENTITY_INSERT [dbo].[Discount] ON;
 INSERT INTO [dbo].[Discount] ([DiscountId], [CouponCode], [Description], [DiscountPercent], [MaxRedemptions], [IsOneTimeUse])
 VALUES (1, 'PILOT2025', N'Pilot program - free access', 100.00, 10, 1);
 SET IDENTITY_INSERT [dbo].[Discount] OFF;
 GO
 
-PRINT 'Database setup complete! Use the signup page to create pilot accounts.';
+PRINT '✅ Scorecard database setup complete!';
+PRINT 'Use the signup page to create pilot accounts (use coupon PILOT2025).';
 GO

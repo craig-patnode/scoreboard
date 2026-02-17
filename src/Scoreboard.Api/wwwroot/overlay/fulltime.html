@@ -5,79 +5,110 @@
     <title>Full Time Overlay</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
     <style>
+        :root {
+            --board-bg: linear-gradient(180deg, #05295d 0%, #004b8b 50%, #05295d 100%);
+            --board-border: 3px solid rgba(255,255,255,0.15);
+            --accent-color: #FFD700;
+            --text-primary: #ffffff;
+            --glow-color: rgba(255,215,0,0.1);
+            --glow-shadow: rgba(255,215,0,0.5);
+            --card-count-color: #ccc;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: transparent; font-family: 'Assistant', 'Segoe UI', 'Arial', sans-serif; overflow: hidden; }
+
         .fulltime-container {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8);
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.8); opacity: 0;
             filter: drop-shadow(0 8px 30px rgba(0, 0, 0, 0.7));
             animation: expandIn 0.8s ease-out forwards;
         }
         @keyframes expandIn { to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
-        .fulltime-board {
-            background: linear-gradient(180deg, #05295d 0%, #002244 50%, #05295d 100%);
-            border: 3px solid #FFD700; border-radius: 12px;
-            padding: 40px 60px; text-align: center; min-width: 500px;
+
+        .fulltime-card {
+            background: var(--board-bg);
+            border: var(--board-border);
+            border-radius: 8px;
+            padding: 12px 50px; text-align: center; min-width: 420px;
             position: relative; overflow: hidden;
         }
-        .fulltime-board::before {
+        .fulltime-card::before {
             content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-            background: radial-gradient(circle, rgba(255,215,0,0.1) 0%, transparent 50%);
+            background: radial-gradient(circle, var(--glow-color) 0%, transparent 50%);
             animation: glow 3s ease-in-out infinite;
         }
         @keyframes glow { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+
         .fulltime-label {
-            font-size: 20px; color: #FFD700; text-transform: uppercase;
-            letter-spacing: 8px; margin-bottom: 25px; font-weight: 900;
-            position: relative; z-index: 1; text-shadow: 0 0 20px rgba(255,215,0,0.5);
+            font-size: 16px; color: var(--accent-color); text-transform: uppercase;
+            letter-spacing: 6px; margin-bottom: 12px; font-weight: 900;
+            position: relative; z-index: 1; text-shadow: 0 0 20px var(--glow-shadow);
         }
+
         .score-row {
             display: flex; align-items: center; justify-content: center;
-            gap: 25px; position: relative; z-index: 1;
+            gap: 28px; position: relative; z-index: 1;
         }
-        .ft-team { text-align: center; min-width: 140px; }
+
+        .ft-team { text-align: center; min-width: 160px; }
+
+        /* Logo container — NO circle, just a natural box */
+        .ft-team-logo {
+            width: 42px; height: 42px; margin: 0 auto 4px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 900; color: #fff;
+        }
+        .ft-team-logo img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
         .ft-team-name {
-            font-size: 20px; font-weight: 900; color: #ffffff; text-transform: uppercase;
-            font-family: 'Arial Black', 'Impact', sans-serif; margin-bottom: 8px;
+            font-size: 16px; font-weight: 900; color: var(--text-primary); text-transform: uppercase;
+            font-family: 'Arial Black', 'Impact', sans-serif; margin-bottom: 4px;
+            position: relative; z-index: 10;
         }
         .ft-score {
-            font-size: 56px; font-weight: 900; color: #FFD700;
+            font-size: 44px; font-weight: 900; color: var(--accent-color);
             font-family: 'Arial Black', sans-serif;
-            text-shadow: 0 0 30px rgba(255,215,0,0.5);
+            text-shadow: 0 0 30px var(--glow-shadow);
         }
-        .ft-separator { font-size: 56px; color: #ffffff; font-weight: 900; }
-        .ft-boards { display: flex; gap: 8px; align-items: center; justify-content: center; margin-top: 8px; }
-        .ft-board-icon { width: 14px; height: 18px; border-radius: 1px; display: inline-block; }
+        .ft-separator { font-size: 44px; color: var(--text-primary); font-weight: 900; }
+        .ft-cards { display: flex; gap: 6px; align-items: center; justify-content: center; margin-top: 4px; }
+        .ft-card-icon { width: 12px; height: 15px; border-radius: 1px; display: inline-block; }
         .ft-yellow { background: #FFD700; }
         .ft-red { background: #DC143C; }
-        .ft-board-count { font-size: 16px; color: #ccc; font-weight: 600; }
+        .ft-card-count { font-size: 13px; color: var(--card-count-color); font-weight: 600; }
+
         .winner-badge {
-            display: none; margin-top: 20px; font-size: 14px; color: #FFD700;
+            display: none; margin-top: 12px; font-size: 13px; color: var(--accent-color);
             letter-spacing: 3px; text-transform: uppercase; position: relative; z-index: 1;
+            font-weight: 900;
         }
-        .winner-badge.show { display: block; animation: fadeIn 1s ease-out 0.5s both; }
-        @keyframes fadeIn { to { opacity: 1; } }
+        .winner-badge.show { display: block; animation: badgeFadeIn 1s ease-out 0.5s both; }
+        @keyframes badgeFadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
     <div class="fulltime-container">
-        <div class="fulltime-board">
+        <div class="fulltime-card">
             <div class="fulltime-label">Full Time</div>
             <div class="score-row">
                 <div class="ft-team">
+                    <div class="ft-team-logo" id="homeLogo"></div>
                     <div class="ft-team-name" id="homeTeamName">HOME</div>
-                    <div class="ft-boards">
-                        <span class="ft-board-icon ft-yellow"></span><span class="ft-board-count" id="homeYellow">0</span>
-                        <span class="ft-board-icon ft-red"></span><span class="ft-board-count" id="homeRed">0</span>
+                    <div class="ft-cards">
+                        <span class="ft-card-icon ft-yellow"></span><span class="ft-card-count" id="homeYellow">0</span>
+                        <span class="ft-card-icon ft-red"></span><span class="ft-card-count" id="homeRed">0</span>
                     </div>
                 </div>
                 <div class="ft-score" id="homeScore">0</div>
                 <div class="ft-separator">-</div>
                 <div class="ft-score" id="awayScore">0</div>
                 <div class="ft-team">
+                    <div class="ft-team-logo" id="awayLogo"></div>
                     <div class="ft-team-name" id="awayTeamName">OPPONENT</div>
-                    <div class="ft-boards">
-                        <span class="ft-board-icon ft-yellow"></span><span class="ft-board-count" id="awayYellow">0</span>
-                        <span class="ft-board-icon ft-red"></span><span class="ft-board-count" id="awayRed">0</span>
+                    <div class="ft-cards">
+                        <span class="ft-card-icon ft-yellow"></span><span class="ft-card-count" id="awayYellow">0</span>
+                        <span class="ft-card-icon ft-red"></span><span class="ft-card-count" id="awayRed">0</span>
                     </div>
                 </div>
             </div>
@@ -86,24 +117,78 @@
     </div>
 
     <script>
-        const pathParts = window.location.pathname.split('/');
-        const streamKey = pathParts[pathParts.length - 1] || new URLSearchParams(window.location.search).get('key');
+        const THEMES = {
+            DeepTide: {
+                '--board-bg': 'linear-gradient(180deg, #05295d 0%, #004b8b 50%, #05295d 100%)',
+                '--board-border': '3px solid rgba(255,255,255,0.15)',
+                '--accent-color': '#FFD700',
+                '--text-primary': '#ffffff',
+                '--glow-color': 'rgba(255,215,0,0.1)',
+                '--glow-shadow': 'rgba(255,215,0,0.5)',
+                '--card-count-color': '#ccc'
+            }
+        };
+
+        function applyTheme() {
+            const params = new URLSearchParams(window.location.search);
+            const themeName = params.get('boardStyleName') || 'DeepTide';
+            const theme = THEMES[themeName] || THEMES.DeepTide;
+            const root = document.documentElement;
+            for (const [prop, value] of Object.entries(theme)) {
+                root.style.setProperty(prop, value);
+            }
+        }
+        applyTheme();
+
+        function getStreamKey() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('key')) return params.get('key');
+            const pathParts = window.location.pathname.split('/');
+            const last = pathParts[pathParts.length - 1];
+            if (last && !last.includes('.')) return last;
+            return null;
+        }
+        const streamKey = getStreamKey();
+
+        function renderLogo(elementId, logoUrl, jerseyColor, numberColor, teamCode) {
+            const el = document.getElementById(elementId);
+            if (logoUrl) {
+                el.innerHTML = `<img src="${logoUrl}" alt="${teamCode || ''}">`;
+            } else {
+                el.style.background = jerseyColor || '#333';
+                el.style.color = numberColor || '#fff';
+                el.style.borderRadius = '8px';
+                el.textContent = (teamCode || '?').substring(0, 3);
+            }
+        }
 
         function updateFullTime(state) {
             document.getElementById('homeTeamName').textContent = state.homeTeamName || 'HOME';
             document.getElementById('awayTeamName').textContent = state.awayTeamName || 'OPPONENT';
             document.getElementById('homeScore').textContent = state.homeScore || 0;
             document.getElementById('awayScore').textContent = state.awayScore || 0;
-            document.getElementById('homeYellow').textContent = state.homeYellowboards || 0;
-            document.getElementById('homeRed').textContent = state.homeRedboards || 0;
-            document.getElementById('awayYellow').textContent = state.awayYellowboards || 0;
-            document.getElementById('awayRed').textContent = state.awayRedboards || 0;
+            document.getElementById('homeYellow').textContent = state.homeYellowCards || 0;
+            document.getElementById('homeRed').textContent = state.homeRedCards || 0;
+            document.getElementById('awayYellow').textContent = state.awayYellowCards || 0;
+            document.getElementById('awayRed').textContent = state.awayRedCards || 0;
 
+            renderLogo('homeLogo', state.homeLogoUrl, state.homeJerseyColor, state.homeNumberColor, state.homeTeamCode || state.homeTeamName);
+            renderLogo('awayLogo', state.awayLogoUrl, state.awayJerseyColor, state.awayNumberColor, state.awayTeamCode || state.awayTeamName);
+
+            // Winner badge
             const badge = document.getElementById('winnerBadge');
-            const hs = state.homeScore || 0, as_ = state.awayScore || 0;
-            if (hs > as_) { badge.textContent = `🏆 ${state.homeTeamName} Wins!`; badge.classList.add('show'); }
-            else if (as_ > hs) { badge.textContent = `🏆 ${state.awayTeamName} Wins!`; badge.classList.add('show'); }
-            else { badge.textContent = 'Draw'; badge.classList.add('show'); }
+            const hs = state.homeScore || 0;
+            const as_ = state.awayScore || 0;
+            if (hs > as_) {
+                badge.textContent = `🏆 ${state.homeTeamName} Wins!`;
+                badge.classList.add('show');
+            } else if (as_ > hs) {
+                badge.textContent = `🏆 ${state.awayTeamName} Wins!`;
+                badge.classList.add('show');
+            } else {
+                badge.textContent = 'Draw';
+                badge.classList.add('show');
+            }
         }
 
         const connection = new signalR.HubConnectionBuilder()

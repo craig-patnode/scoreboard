@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scoreboard Overlay</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <style>
+        :root {
+            --board-bg: linear-gradient(180deg, #05295d 0%, #004b8b 50%, #05295d 100%);
+            --score-bg: radial-gradient(circle, #5b84c1 0%, #004b8b 55%, #05295d 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: transparent; font-family: 'Assistant', 'Segoe UI', 'Arial', sans-serif; overflow: hidden; }
+
+        .scoreboard-container {
+            position: absolute; top: 20px; left: 20px;
+            filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.5));
+            animation: slideInFromLeft 1s ease-out forwards;
+        }
+        @keyframes slideInFromLeft {
+            0% { transform: translateX(-100%); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Wrapper so logos can overflow outside the bar */
+        .scoreboard-wrapper { position: relative; }
+
+        .scoreboard { position: relative; display: flex; align-items: stretch; height: 65px; }
+
+        /* ===== TIMER BOX — reduced font, vertically centered ===== */
+        .timer-box {
+            background: #ffffff; border: 1px solid #ffffff; padding: 0 14px;
+            display: flex; align-items: center; justify-content: center;
+            min-width: 110px; position: relative; z-index: 5;
+            flex-direction: column; gap: 0px;
+            transition: background 0.5s ease;
+        }
+        .timer-box.period-expired { background: #FFD700; border-color: #FFD700; }
+
+        .timer {
+            font-size: 28px; font-weight: 900; color: #000000;
+            font-family: 'Arial Black', 'Impact', sans-serif;
+            line-height: 1; margin-top: 2px;
+        }
+        .timer.running { animation: timerPulse 2s ease-in-out infinite; }
+        @keyframes timerPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
+
+        .period-label {
+            font-size: 7px; font-weight: 700; color: #555; text-transform: uppercase;
+            letter-spacing: 1px; line-height: 1; margin-top: 2px;
+        }
+        .timer-box.period-expired .period-label { color: #333; }
+
+        .divider-left {
+            width: 43px; background: linear-gradient(180deg, #ffffff 0%, #ffffff 100%);
+            position: relative; z-index: 4;
+        }
+
+        .main-bar {
+            background: var(--board-bg);
+            flex: 1; display: flex; align-items: stretch; position: relative;
+        }
+
+        .metallic-stripe-container {
+            position: absolute; top: 2px; left: 10px; right: 10px;
+            height: calc(100% - 4px); z-index: 1; display: flex;
+        }
+        .metallic-stripe-home, .metallic-stripe-away {
+            flex: 1;
+            background: linear-gradient(180deg, #4f4f4f 0%, #d0d0d0 45%, #4f4f4f 100%);
+            transition: background 3s ease-in-out;
+        }
+
+        .team-section {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            position: relative; z-index: 2; min-width: 200px; padding: 0 10px;
+        }
+
+        /* ===== OVERSIZED TEAM LOGOS — flanking the bar ===== */
+        /* Home logo: left edge of home section, overlapping outward */
+        .team-logo-home {
+            position: absolute;
+            top: 50%; left: 110px;
+            transform: translateY(-50%);
+            width: 85px; height: 85px;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            pointer-events: none;
+        }
+        /* Away logo: right edge of away section, overlapping outward */
+        .team-logo-away {
+            position: absolute;
+            top: 50%; right: -55px;
+            transform: translateY(-50%);
+            width: 85px; height: 85px;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            pointer-events: none;
+        }
+        .team-logo-home img, .team-logo-away img {
+            width: 100%; height: 100%; object-fit: contain;
+            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6));
+        }
+        .team-logo-home.visible, .team-logo-away.visible { opacity: 1; }
+
+        .team-name-wrapper {
+            width: 100%; display: flex; justify-content: center; align-items: center;
+            overflow: visible;
+        }
+        .team-name {
+            color: #000000; font-size: 5px; font-weight: 900; text-transform: uppercase;
+            letter-spacing: 0.5px; font-family: 'Arial Black', 'Impact', sans-serif;
+            text-align: center; transition: color 1.2s ease-in-out;
+            transform-origin: center top; width: 200px; white-space: normal;
+            overflow-wrap: break-word; padding-top: 10px;
+            position: relative; z-index: 20;
+        }
+        @keyframes swellSubtle { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
+        .team-name.swell { animation: swellSubtle 3s ease-in-out forwards; }
+
+        .score-section {
+            background: var(--score-bg);
+            padding: 0 40px; display: flex; align-items: center; justify-content: center;
+            gap: 20px; position: relative; z-index: 3;
+            min-width: 150px; margin: 0;
+            border-left: 2px solid rgba(255,255,255,0.15);
+            border-right: 2px solid rgba(255,255,255,0.15);
+        }
+        .score {
+            font-size: 40px; font-weight: 600; color: #ffffff;
+            font-family: 'Assistant', 'Arial', sans-serif;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            min-width: 35px; text-align: center;
+        }
+        .score-separator { font-size: 40px; font-weight: 600; color: #ffffff; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); }
+
+        @keyframes scoreFlash {
+            0% { transform: scale(1); color: #ffffff; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+            35% { transform: scale(1.15); color: #FFD700; text-shadow: 0 0 25px rgba(255,215,0,0.8), 2px 2px 4px rgba(0,0,0,0.5); }
+            65% { transform: scale(1.05); color: #FFD700; text-shadow: 0 0 15px rgba(255,215,0,0.5), 2px 2px 4px rgba(0,0,0,0.5); }
+            100% { transform: scale(1); color: #ffffff; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        }
+        .score.updated { animation: scoreFlash 0.8s ease-in-out; }
+
+        .boards { display: flex; gap: 10px; font-size: 12px; margin-top: 4px; }
+        .board-indicator { display: flex; align-items: center; gap: 3px; color: #000000; font-weight: 600; transition: color 1.2s ease-in-out; }
+        .board-icon { width: 15px; height: 17px; border-radius: 1px; display: inline-block; }
+        .yellow-board { background: #FFD700; }
+        .red-board { background: #DC143C; }
+        .board-count { font-size: 20px; }
+
+        .status-indicator {
+            position: absolute; bottom: 20px; left: 20px; width: 10px; height: 10px;
+            border-radius: 50%; background: #4CAF50; box-shadow: 0 0 10px rgba(76,175,80,0.8);
+        }
+        .status-indicator.disconnected {
+            background: #f44336; box-shadow: 0 0 10px rgba(244,67,54,0.8);
+            animation: blink 1s ease-in-out infinite;
+        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    </style>
+</head>
+<body>
+    <div class="scoreboard-container">
+        <div class="scoreboard-wrapper">
+            <!-- Home logo — outside the bar, overlapping left edge -->
+            <div class="team-logo-home" id="homeLogoCrest"></div>
+            <!-- Away logo — outside the bar, overlapping right edge -->
+            <div class="team-logo-away" id="awayLogoCrest"></div>
+
+            <div class="scoreboard">
+                <div class="timer-box" id="timerBox">
+                    <div class="timer" id="timer">00:00</div>
+                    <div class="period-label" id="periodLabel">1ST HALF</div>
+                </div>
+                <div class="divider-left"></div>
+                <div class="main-bar">
+                    <div class="metallic-stripe-container">
+                        <div class="metallic-stripe-home" id="metallicStripeHome"></div>
+                        <div class="metallic-stripe-away" id="metallicStripeAway"></div>
+                    </div>
+                    <div class="team-section home" id="homeSection">
+                        <div class="team-name-wrapper">
+                            <div class="team-name" id="homeTeamName">HOME</div>
+                        </div>
+                        <div class="boards">
+                            <div class="board-indicator" id="homeYellowIndicator">
+                                <span class="board-icon yellow-board"></span>
+                                <span id="homeYellow" class="board-count">0</span>
+                            </div>
+                            <div class="board-indicator" id="homeRedIndicator">
+                                <span class="board-icon red-board"></span>
+                                <span id="homeRed" class="board-count">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="score-section">
+                        <div class="score" id="homeScore">0</div>
+                        <div class="score-separator">-</div>
+                        <div class="score" id="awayScore">0</div>
+                    </div>
+                    <div class="team-section away" id="awaySection">
+                        <div class="team-name-wrapper">
+                            <div class="team-name" id="awayTeamName">OPPONENT</div>
+                        </div>
+                        <div class="boards">
+                            <div class="board-indicator" id="awayYellowIndicator">
+                                <span class="board-icon yellow-board"></span>
+                                <span id="awayYellow" class="board-count">0</span>
+                            </div>
+                            <div class="board-indicator" id="awayRedIndicator">
+                                <span class="board-icon red-board"></span>
+                                <span id="awayRed" class="board-count">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="status-indicator" id="statusIndicator"></div>
+
+    <script>
+        const THEMES = {
+            DeepTide: {
+                '--board-bg': 'linear-gradient(180deg, #05295d 0%, #004b8b 50%, #05295d 100%)',
+                '--score-bg': 'radial-gradient(circle, #5b84c1 0%, #004b8b 55%, #05295d 100%)'
+            }
+        };
+
+        function applyTheme() {
+            const params = new URLSearchParams(window.location.search);
+            const themeName = params.get('boardStyleName') || 'DeepTide';
+            const theme = THEMES[themeName] || THEMES.DeepTide;
+            const root = document.documentElement;
+            for (const [prop, value] of Object.entries(theme)) root.style.setProperty(prop, value);
+        }
+        applyTheme();
+
+        function getStreamKey() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('key')) return params.get('key');
+            const pathParts = window.location.pathname.split('/');
+            const last = pathParts[pathParts.length - 1];
+            if (last && !last.includes('.')) return last;
+            return null;
+        }
+        const streamKey = getStreamKey();
+
+        const elements = {
+            homeTeamName: document.getElementById('homeTeamName'),
+            awayTeamName: document.getElementById('awayTeamName'),
+            homeScore: document.getElementById('homeScore'),
+            awayScore: document.getElementById('awayScore'),
+            timer: document.getElementById('timer'),
+            timerBox: document.getElementById('timerBox'),
+            periodLabel: document.getElementById('periodLabel'),
+            homeYellow: document.getElementById('homeYellow'),
+            homeRed: document.getElementById('homeRed'),
+            awayYellow: document.getElementById('awayYellow'),
+            awayRed: document.getElementById('awayRed'),
+            statusIndicator: document.getElementById('statusIndicator'),
+            metallicStripeHome: document.getElementById('metallicStripeHome'),
+            metallicStripeAway: document.getElementById('metallicStripeAway'),
+            homeYellowIndicator: document.getElementById('homeYellowIndicator'),
+            homeRedIndicator: document.getElementById('homeRedIndicator'),
+            awayYellowIndicator: document.getElementById('awayYellowIndicator'),
+            awayRedIndicator: document.getElementById('awayRedIndicator'),
+            homeLogoCrest: document.getElementById('homeLogoCrest'),
+            awayLogoCrest: document.getElementById('awayLogoCrest')
+        };
+
+        let previousState = { homeScore: 0, awayScore: 0 };
+        let currentState = null;
+        let timerInterval = null;
+        let animationPlayed = false;
+
+        // FIXED: robust period label mapping — handles undefined, null, empty, numeric
+        const PERIOD_LABELS = {
+            '1H': '1ST HALF', '2H': '2ND HALF', 'OT1': 'OT 1', 'OT2': 'OT 2', 'PEN': 'PENALTIES'
+        };
+
+        function getPeriodDisplay(period) {
+            if (!period || period === '' || period === 'undefined' || period === 'null') return '1ST HALF';
+            const label = PERIOD_LABELS[String(period).toUpperCase()];
+            return label || '1ST HALF';
+        }
+
+        function renderLogoCrest(element, logoUrl) {
+            if (logoUrl) {
+                element.innerHTML = `<img src="${logoUrl}" alt="">`;
+            } else {
+                element.innerHTML = '';
+                element.classList.remove('visible');
+            }
+        }
+
+        function computeCurrentTimer(state) {
+            if (!state) return 0;
+            let elapsed = state.elapsedSecondsAtPause || 0;
+            if (state.isTimerRunning && state.timerStartedAtUtc) {
+                const started = new Date(state.timerStartedAtUtc + 'Z').getTime();
+                elapsed += Math.floor((Date.now() - started) / 1000);
+            }
+            if (state.timerDirection === 'DOWN') return Math.max(0, (state.timerSetSeconds || 0) - elapsed);
+            return elapsed;
+        }
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function startLocalTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (currentState && currentState.isTimerRunning) {
+                    const secs = computeCurrentTimer(currentState);
+                    elements.timer.textContent = formatTime(secs);
+                    checkTimerExpired(secs);
+                }
+            }, 200);
+        }
+
+        function checkTimerExpired(secs) {
+            if (!currentState) return;
+            const period = currentState.currentPeriod || '1H';
+            const halfLen = (currentState.halfLengthMinutes || 45) * 60;
+            const otLen = (currentState.otLengthMinutes || 5) * 60;
+            let periodEnd = 0;
+            if (period === '1H' || period === '2H') periodEnd = halfLen;
+            else if (period === 'OT1' || period === 'OT2') periodEnd = otLen;
+            if (currentState.timerDirection !== 'DOWN' && periodEnd > 0 && secs >= periodEnd) {
+                elements.timerBox.classList.add('period-expired');
+            } else {
+                elements.timerBox.classList.remove('period-expired');
+            }
+        }
+
+        function adjustTeamNameSizes() {
+            const maxWidth = 180, baseFontSize = 18, minFontSize = 10;
+            elements.homeTeamName.style.fontSize = baseFontSize + 'px';
+            elements.awayTeamName.style.fontSize = baseFontSize + 'px';
+            const maxTextWidth = Math.max(elements.homeTeamName.scrollWidth, elements.awayTeamName.scrollWidth);
+            let fontSize = baseFontSize;
+            if (maxTextWidth > maxWidth) fontSize = Math.max(minFontSize, (baseFontSize * maxWidth) / maxTextWidth);
+            elements.homeTeamName.style.fontSize = fontSize + 'px';
+            elements.awayTeamName.style.fontSize = fontSize + 'px';
+        }
+
+        function updateScoreboard(state) {
+            currentState = state;
+            elements.homeTeamName.textContent = state.homeTeamName || 'HOME';
+            elements.awayTeamName.textContent = state.awayTeamName || 'OPPONENT';
+            adjustTeamNameSizes();
+
+            updateScore('homeScore', state.homeScore, previousState.homeScore);
+            updateScore('awayScore', state.awayScore, previousState.awayScore);
+
+            const secs = computeCurrentTimer(state);
+            elements.timer.textContent = formatTime(secs);
+            if (state.isTimerRunning) { elements.timer.classList.add('running'); startLocalTimer(); }
+            else { elements.timer.classList.remove('running'); if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } }
+
+            checkTimerExpired(secs);
+
+            // FIXED: period label — use robust mapping
+            elements.periodLabel.textContent = getPeriodDisplay(state.currentPeriod);
+
+            elements.homeYellow.textContent = state.homeYellowCards || 0;
+            elements.homeRed.textContent = state.homeRedCards || 0;
+            elements.awayYellow.textContent = state.awayYellowCards || 0;
+            elements.awayRed.textContent = state.awayRedCards || 0;
+
+            applyJerseyColor(elements.metallicStripeHome, state.homeJerseyColor);
+            applyJerseyColor(elements.metallicStripeAway, state.awayJerseyColor);
+
+            // Logos — set image source
+            renderLogoCrest(elements.homeLogoCrest, state.homeLogoUrl);
+            renderLogoCrest(elements.awayLogoCrest, state.awayLogoUrl);
+
+            previousState = { homeScore: state.homeScore, awayScore: state.awayScore };
+
+            // Intro animation
+            if (!animationPlayed) {
+                animationPlayed = true;
+                setTimeout(() => {
+                    elements.metallicStripeHome.style.background = makeGradient(state.homeJerseyColor);
+                    elements.metallicStripeAway.style.background = makeGradient(state.awayJerseyColor);
+                    setTimeout(() => {
+                        elements.homeTeamName.classList.add('swell');
+                        elements.awayTeamName.classList.add('swell');
+                        setTimeout(() => {
+                            elements.homeTeamName.style.color = state.homeNumberColor || '#ffffff';
+                            elements.awayTeamName.style.color = state.awayNumberColor || '#003366';
+                            elements.homeYellowIndicator.style.color = state.homeNumberColor || '#ffffff';
+                            elements.homeRedIndicator.style.color = state.homeNumberColor || '#ffffff';
+                            elements.awayYellowIndicator.style.color = state.awayNumberColor || '#003366';
+                            elements.awayRedIndicator.style.color = state.awayNumberColor || '#003366';
+                            // Logos appear last — full opacity
+                            setTimeout(() => {
+                                elements.homeLogoCrest.classList.add('visible');
+                                elements.awayLogoCrest.classList.add('visible');
+                            }, 500);
+                        }, 1500);
+                    }, 500);
+                }, 2000);
+            } else {
+                if (state.homeLogoUrl) elements.homeLogoCrest.classList.add('visible');
+                if (state.awayLogoUrl) elements.awayLogoCrest.classList.add('visible');
+            }
+        }
+
+        function makeGradient(color) {
+            return `linear-gradient(180deg, ${darken(color, 30)} 0%, ${color} 45%, ${darken(color, 30)} 100%)`;
+        }
+        function darken(hex, percent) {
+            if (!hex) return '#4f4f4f';
+            hex = hex.replace('#', '');
+            const r = Math.max(0, parseInt(hex.substr(0,2), 16) - percent);
+            const g = Math.max(0, parseInt(hex.substr(2,2), 16) - percent);
+            const b = Math.max(0, parseInt(hex.substr(4,2), 16) - percent);
+            return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+        }
+        function applyJerseyColor(element, color) {
+            if (!color) return;
+            element.style.background = makeGradient(color);
+        }
+        function updateScore(elementId, newScore, oldScore) {
+            const element = elements[elementId];
+            element.textContent = newScore || 0;
+            if (newScore !== oldScore) {
+                element.classList.remove('updated');
+                void element.offsetWidth;
+                element.classList.add('updated');
+            }
+        }
+        function updateConnectionStatus(connected) {
+            if (connected) elements.statusIndicator.classList.remove('disconnected');
+            else elements.statusIndicator.classList.add('disconnected');
+        }
+
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl(`${window.location.origin}/hubs/game`)
+            .withAutomaticReconnect([0, 1000, 2000, 5000, 10000, 30000])
+            .build();
+
+        connection.on("GameStateUpdated", updateScoreboard);
+        connection.onreconnecting(() => updateConnectionStatus(false));
+        connection.onreconnected(() => { updateConnectionStatus(true); if (streamKey) connection.invoke("JoinStream", streamKey); });
+        connection.onclose(() => updateConnectionStatus(false));
+
+        async function startConnection() {
+            try {
+                await connection.start();
+                updateConnectionStatus(true);
+                if (streamKey) await connection.invoke("JoinStream", streamKey);
+            } catch (err) { updateConnectionStatus(false); setTimeout(startConnection, 3000); }
+        }
+        startConnection();
+        window.addEventListener('load', adjustTeamNameSizes);
+        window.addEventListener('resize', adjustTeamNameSizes);
+    </script>
+</body>
+</html>

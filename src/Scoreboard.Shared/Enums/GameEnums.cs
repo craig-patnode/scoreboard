@@ -14,7 +14,7 @@ public enum TimerDirection
     Down
 }
 
-public enum boardType
+public enum CardType
 {
     Yellow,
     Red

@@ -55,23 +55,23 @@ public class GameService
 
             HomeTeamId = game.HomeTeamId,
             HomeTeamName = game.HomeTeam?.TeamName ?? "Home",
-            HomeTeamShortName = game.HomeTeam?.ShortName,
+            HomeTeamCode = game.HomeTeam?.TeamCode ?? "HOME",
             HomeJerseyColor = game.HomeTeam?.JerseyColor ?? "#8B0000",
             HomeNumberColor = game.HomeTeam?.NumberColor ?? "#FFFFFF",
             HomeLogoUrl = game.HomeTeam?.LogoUrl,
             HomeScore = homeStats?.Score ?? 0,
-            HomeYellowboards = homeStats?.Yellowboards ?? 0,
-            HomeRedboards = homeStats?.Redboards ?? 0,
+            HomeYellowCards = homeStats?.YellowCards ?? 0,
+            HomeRedCards = homeStats?.RedCards ?? 0,
 
             AwayTeamId = game.AwayTeamId,
             AwayTeamName = game.AwayTeam?.TeamName ?? "Opponent",
-            AwayTeamShortName = game.AwayTeam?.ShortName,
+            AwayTeamCode = game.AwayTeam?.TeamCode ?? "OPP",
             AwayJerseyColor = game.AwayTeam?.JerseyColor ?? "#FFFFFF",
             AwayNumberColor = game.AwayTeam?.NumberColor ?? "#003366",
             AwayLogoUrl = game.AwayTeam?.LogoUrl,
             AwayScore = awayStats?.Score ?? 0,
-            AwayYellowboards = awayStats?.Yellowboards ?? 0,
-            AwayRedboards = awayStats?.Redboards ?? 0,
+            AwayYellowCards = awayStats?.YellowCards ?? 0,
+            AwayRedCards = awayStats?.RedCards ?? 0,
 
             IsTimerRunning = game.TimerIsRunning,
             TimerDirection = game.TimerDirection,
@@ -86,7 +86,7 @@ public class GameService
 
             SportName = game.Sport?.SportName ?? "Soccer",
             SportCode = game.Sport?.SportCode ?? "SOC",
-            Hasboards = game.Sport?.Hasboards ?? true,
+            HasCards = game.Sport?.HasCards ?? true,
             HasTimer = game.Sport?.HasTimer ?? true,
             DefaultPeriodLengthSeconds = game.Sport?.DefaultPeriodLengthSeconds ?? 2700
         };
@@ -108,12 +108,48 @@ public class GameService
             eg.ModifiedDateUtc = DateTime.UtcNow;
         }
 
-        var streamer = await _db.Streamers
-            .Include(s => s.Teams.Where(t => t.IsDefault && t.IsActive))
-            .FirstAsync(s => s.StreamerId == streamerId);
+        // Save deactivation first to clear the unique filtered index
+        if (existingGames.Any())
+            await _db.SaveChangesAsync();
 
-        var defaultHome = streamer.Teams.FirstOrDefault(t => t.TeamName != "Opponent");
-        var defaultAway = streamer.Teams.FirstOrDefault(t => t.TeamName == "Opponent");
+        // Look up by TeamCode — stable, never changes regardless of team name
+        var homeTeam = await _db.Teams
+            .FirstOrDefaultAsync(t => t.StreamerId == streamerId && t.TeamCode == "HOME" && t.IsActive);
+        var awayTeam = await _db.Teams
+            .FirstOrDefaultAsync(t => t.StreamerId == streamerId && t.TeamCode == "OPP" && t.IsActive);
+
+        // Auto-create missing teams if needed
+        if (homeTeam == null)
+        {
+            homeTeam = new Team
+            {
+                StreamerId = streamerId,
+                TeamName = request.HomeTeamName ?? "Home",
+                TeamCode = "HOME",
+                JerseyColor = "#8B0000",
+                NumberColor = "#FFFFFF",
+                SportId = 1,
+                IsDefault = true
+            };
+            _db.Teams.Add(homeTeam);
+            await _db.SaveChangesAsync();
+        }
+
+        if (awayTeam == null)
+        {
+            awayTeam = new Team
+            {
+                StreamerId = streamerId,
+                TeamName = request.AwayTeamName ?? "Opponent",
+                TeamCode = "OPP",
+                JerseyColor = "#FFFFFF",
+                NumberColor = "#003366",
+                SportId = 1,
+                IsDefault = true
+            };
+            _db.Teams.Add(awayTeam);
+            await _db.SaveChangesAsync();
+        }
 
         int homeTeamId, awayTeamId;
 
@@ -124,20 +160,20 @@ public class GameService
         }
         else
         {
-            // Create or use teams based on names
-            if (!string.IsNullOrWhiteSpace(request.HomeTeamName) && defaultHome != null)
+            // Update team names if provided
+            if (!string.IsNullOrWhiteSpace(request.HomeTeamName))
             {
-                defaultHome.TeamName = request.HomeTeamName;
-                defaultHome.ModifiedDateUtc = DateTime.UtcNow;
+                homeTeam.TeamName = request.HomeTeamName;
+                homeTeam.ModifiedDateUtc = DateTime.UtcNow;
             }
-            if (!string.IsNullOrWhiteSpace(request.AwayTeamName) && defaultAway != null)
+            if (!string.IsNullOrWhiteSpace(request.AwayTeamName))
             {
-                defaultAway.TeamName = request.AwayTeamName;
-                defaultAway.ModifiedDateUtc = DateTime.UtcNow;
+                awayTeam.TeamName = request.AwayTeamName;
+                awayTeam.ModifiedDateUtc = DateTime.UtcNow;
             }
 
-            homeTeamId = defaultHome?.TeamId ?? throw new InvalidOperationException("No default home team found");
-            awayTeamId = defaultAway?.TeamId ?? throw new InvalidOperationException("No default away team found");
+            homeTeamId = homeTeam.TeamId;
+            awayTeamId = awayTeam.TeamId;
         }
 
         var game = new Game
@@ -261,9 +297,9 @@ public class GameService
         await _db.SaveChangesAsync();
     }
 
-    // ---- board Operations ----
+    // ---- Card Operations ----
 
-    public async Task UpdateboardsAsync(int streamerId, bool isHome, bool isYellow, int count)
+    public async Task UpdateCardsAsync(int streamerId, bool isHome, bool isYellow, int count)
     {
         var game = await GetActiveGameAsync(streamerId);
         if (game == null) return;
@@ -272,8 +308,8 @@ public class GameService
         if (stats == null) return;
 
         var clamped = Math.Clamp(count, 0, 3);
-        if (isYellow) stats.Yellowboards = clamped;
-        else stats.Redboards = clamped;
+        if (isYellow) stats.YellowCards = clamped;
+        else stats.RedCards = clamped;
 
         stats.ModifiedDateUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync();
@@ -291,6 +327,26 @@ public class GameService
         if (team == null) return;
 
         team.TeamName = name;
+        team.ModifiedDateUtc = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task UpdateTeamAppearanceAsync(int streamerId, bool isHome, UpdateTeamAppearanceRequest request)
+    {
+        var game = await GetActiveGameAsync(streamerId);
+        if (game == null) return;
+
+        var teamId = isHome ? game.HomeTeamId : game.AwayTeamId;
+        var team = await _db.Teams.FindAsync(teamId);
+        if (team == null) return;
+
+        if (request.JerseyColor != null)
+            team.JerseyColor = request.JerseyColor;
+        if (request.NumberColor != null)
+            team.NumberColor = request.NumberColor;
+        if (request.LogoData != null)
+            team.LogoUrl = request.LogoData;
+
         team.ModifiedDateUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync();
     }
@@ -323,8 +379,8 @@ public class GameService
         foreach (var stats in game.TeamStats)
         {
             stats.Score = 0;
-            stats.Yellowboards = 0;
-            stats.Redboards = 0;
+            stats.YellowCards = 0;
+            stats.RedCards = 0;
             stats.ModifiedDateUtc = DateTime.UtcNow;
         }
 

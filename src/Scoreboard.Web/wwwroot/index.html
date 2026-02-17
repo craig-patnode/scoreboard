@@ -44,10 +44,10 @@
     <div class="hero">
         <div class="subtitle">Live Streaming Made Professional</div>
         <h1>⚽ Scoreboard</h1>
-        <p>Professional scoreboard overlays for your live stream. Control scores, timers, and boards in real-time. Built for youth sports streamers.</p>
+        <p>Professional scoreboard overlays for your live stream. Control scores, timers, and cards in real-time. Built for youth sports streamers.</p>
         <div class="cta-row">
             <a href="/signup.html" class="cta-btn cta-primary">Get Started Free</a>
-            <a href="/controller.html" class="cta-btn cta-secondary">Sign In</a>
+            <a href="/controller.html" class="cta-btn cta-secondary">Sign In / My Controller</a>
         </div>
         <div class="features">
             <div class="feature">
@@ -72,5 +72,11 @@
             </div>
         </div>
     </div>
+    <script>
+        // If already logged in, redirect straight to the controller
+        if (localStorage.getItem('sc_token')) {
+            window.location.href = '/controller.html';
+        }
+    </script>
 </body>
 </html>

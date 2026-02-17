@@ -70,7 +70,7 @@ public class AuthService
             {
                 StreamerId = streamer.StreamerId,
                 TeamName = "Home",
-                ShortName = "HOME",
+                TeamCode = "HOME",
                 JerseyColor = "#8B0000",
                 NumberColor = "#FFFFFF",
                 SportId = 1,
@@ -80,7 +80,7 @@ public class AuthService
             {
                 StreamerId = streamer.StreamerId,
                 TeamName = "Opponent",
-                ShortName = "OPP",
+                TeamCode = "OPP",
                 JerseyColor = "#FFFFFF",
                 NumberColor = "#003366",
                 SportId = 1,

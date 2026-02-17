@@ -65,6 +65,7 @@ public class ScoreboardDbContext : DbContext
         modelBuilder.Entity<Team>(e =>
         {
             e.HasKey(t => t.TeamId);
+            e.HasIndex(t => new { t.StreamerId, t.TeamCode }).IsUnique();
             e.HasOne(t => t.Streamer)
                 .WithMany(s => s.Teams)
                 .HasForeignKey(t => t.StreamerId)
