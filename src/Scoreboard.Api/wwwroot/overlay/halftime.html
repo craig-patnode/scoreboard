@@ -5,6 +5,16 @@
     <title>Half Time Overlay</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
     <style>
+        :root {
+            --board-bg: linear-gradient(180deg, #05295d 0%, #004b8b 50%, #05295d 100%);
+            --board-border: 2px solid rgba(255,255,255,0.15);
+            --accent-color: #FFD700;
+            --text-primary: #ffffff;
+            --score-color: #ffffff;
+            --separator-color: #FFD700;
+            --card-count-color: #ccc;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: transparent; font-family: 'Assistant', 'Segoe UI', 'Arial', sans-serif; overflow: hidden; }
 
@@ -15,47 +25,58 @@
         }
         @keyframes fadeSlideIn { to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
 
-        .halftime-board {
-            background: linear-gradient(180deg, #1a1a1a 0%, #2a2a2a 50%, #1a1a1a 100%);
-            border: 2px solid #FFD700; border-radius: 12px;
-            padding: 35px 50px; text-align: center; min-width: 450px;
+        .halftime-card {
+            background: var(--board-bg);
+            border: var(--board-border);
+            border-radius: 8px;
+            padding: 12px 50px; text-align: center; min-width: 420px;
         }
 
         .halftime-label {
-            font-size: 16px; color: #FFD700; text-transform: uppercase;
-            letter-spacing: 6px; margin-bottom: 25px; font-weight: 900;
+            font-size: 12px; color: var(--accent-color); text-transform: uppercase;
+            letter-spacing: 4px; margin-bottom: 12px; font-weight: 900;
         }
 
-        .score-row { display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 15px; }
-        .ht-team { text-align: center; min-width: 130px; }
+        .score-row { display: flex; align-items: center; justify-content: center; gap: 40px; margin-bottom: 8px; }
+
+        .ht-team { text-align: center; min-width: 150px; }
+
+        .ht-team-logo {
+            width: 40px; height: 40px; margin: 0 auto 4px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 900; color: #fff;
+        }
+        .ht-team-logo img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
         .ht-team-name {
-            font-size: 18px; font-weight: 900; color: #ffffff; text-transform: uppercase;
-            font-family: 'Arial Black', 'Impact', sans-serif; margin-bottom: 5px;
+            font-size: 15px; font-weight: 900; color: var(--text-primary); text-transform: uppercase;
+            font-family: 'Arial Black', 'Impact', sans-serif; margin-bottom: 3px;
+            position: relative; z-index: 10;
         }
         .ht-score {
-            font-size: 48px; font-weight: 900; color: #ffffff;
+            font-size: 38px; font-weight: 900; color: var(--score-color);
             font-family: 'Arial Black', sans-serif;
         }
-        .ht-separator { font-size: 48px; color: #FFD700; font-weight: 900; }
+        .ht-separator { font-size: 38px; color: var(--separator-color); font-weight: 900; }
 
-        .boards-row { display: flex; justify-content: center; gap: 40px; margin-top: 10px; }
-        .ht-boards { display: flex; gap: 8px; align-items: center; }
-        .ht-board-icon { width: 14px; height: 18px; border-radius: 1px; display: inline-block; }
+        .ht-cards { display: flex; gap: 6px; align-items: center; justify-content: center; margin-top: 2px; }
+        .ht-card-icon { width: 12px; height: 15px; border-radius: 1px; display: inline-block; }
         .ht-yellow { background: #FFD700; }
         .ht-red { background: #DC143C; }
-        .ht-board-count { font-size: 16px; color: #ccc; font-weight: 600; }
+        .ht-card-count { font-size: 13px; color: var(--card-count-color); font-weight: 600; }
     </style>
 </head>
 <body>
     <div class="halftime-container">
-        <div class="halftime-board">
+        <div class="halftime-card">
             <div class="halftime-label">⚽ Half Time</div>
             <div class="score-row">
                 <div class="ht-team">
+                    <div class="ht-team-logo" id="homeLogo"></div>
                     <div class="ht-team-name" id="homeTeamName">HOME</div>
-                    <div class="ht-boards">
-                        <span class="ht-board-icon ht-yellow"></span><span class="ht-board-count" id="homeYellow">0</span>
-                        <span class="ht-board-icon ht-red"></span><span class="ht-board-count" id="homeRed">0</span>
+                    <div class="ht-cards">
+                        <span class="ht-card-icon ht-yellow"></span><span class="ht-card-count" id="homeYellow">0</span>
+                        <span class="ht-card-icon ht-red"></span><span class="ht-card-count" id="homeRed">0</span>
                     </div>
                 </div>
                 <div>
@@ -66,10 +87,11 @@
                     <div class="ht-score" id="awayScore">0</div>
                 </div>
                 <div class="ht-team">
+                    <div class="ht-team-logo" id="awayLogo"></div>
                     <div class="ht-team-name" id="awayTeamName">OPPONENT</div>
-                    <div class="ht-boards">
-                        <span class="ht-board-icon ht-yellow"></span><span class="ht-board-count" id="awayYellow">0</span>
-                        <span class="ht-board-icon ht-red"></span><span class="ht-board-count" id="awayRed">0</span>
+                    <div class="ht-cards">
+                        <span class="ht-card-icon ht-yellow"></span><span class="ht-card-count" id="awayYellow">0</span>
+                        <span class="ht-card-icon ht-red"></span><span class="ht-card-count" id="awayRed">0</span>
                     </div>
                 </div>
             </div>
@@ -77,18 +99,65 @@
     </div>
 
     <script>
-        const pathParts = window.location.pathname.split('/');
-        const streamKey = pathParts[pathParts.length - 1] || new URLSearchParams(window.location.search).get('key');
+        // ===== Theme System =====
+        const THEMES = {
+            DeepTide: {
+                '--board-bg': 'linear-gradient(180deg, #05295d 0%, #004b8b 50%, #05295d 100%)',
+                '--board-border': '2px solid rgba(255,255,255,0.15)',
+                '--accent-color': '#FFD700',
+                '--text-primary': '#ffffff',
+                '--score-color': '#ffffff',
+                '--separator-color': '#FFD700',
+                '--card-count-color': '#ccc'
+            }
+        };
+
+        function applyTheme() {
+            const params = new URLSearchParams(window.location.search);
+            const themeName = params.get('boardStyleName') || 'DeepTide';
+            const theme = THEMES[themeName] || THEMES.DeepTide;
+            const root = document.documentElement;
+            for (const [prop, value] of Object.entries(theme)) {
+                root.style.setProperty(prop, value);
+            }
+        }
+        applyTheme();
+
+        // ===== Stream Key — robust extraction =====
+        function getStreamKey() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('key')) return params.get('key');
+            const pathParts = window.location.pathname.split('/');
+            const last = pathParts[pathParts.length - 1];
+            if (last && !last.includes('.')) return last;
+            return null;
+        }
+        const streamKey = getStreamKey();
+
+        function renderLogo(elementId, logoUrl, jerseyColor, numberColor, teamCode) {
+            const el = document.getElementById(elementId);
+            if (logoUrl) {
+                el.innerHTML = `<img src="${logoUrl}" alt="${teamCode || ''}">`;
+            } else {
+                el.style.background = jerseyColor || '#333';
+                el.style.color = numberColor || '#fff';
+                el.style.borderRadius = '6px';
+                el.textContent = (teamCode || '?').substring(0, 3);
+            }
+        }
 
         function updateHalfTime(state) {
             document.getElementById('homeTeamName').textContent = state.homeTeamName || 'HOME';
             document.getElementById('awayTeamName').textContent = state.awayTeamName || 'OPPONENT';
             document.getElementById('homeScore').textContent = state.homeScore || 0;
             document.getElementById('awayScore').textContent = state.awayScore || 0;
-            document.getElementById('homeYellow').textContent = state.homeYellowboards || 0;
-            document.getElementById('homeRed').textContent = state.homeRedboards || 0;
-            document.getElementById('awayYellow').textContent = state.awayYellowboards || 0;
-            document.getElementById('awayRed').textContent = state.awayRedboards || 0;
+            document.getElementById('homeYellow').textContent = state.homeYellowCards || 0;
+            document.getElementById('homeRed').textContent = state.homeRedCards || 0;
+            document.getElementById('awayYellow').textContent = state.awayYellowCards || 0;
+            document.getElementById('awayRed').textContent = state.awayRedCards || 0;
+
+            renderLogo('homeLogo', state.homeLogoUrl, state.homeJerseyColor, state.homeNumberColor, state.homeTeamCode || state.homeTeamName);
+            renderLogo('awayLogo', state.awayLogoUrl, state.awayJerseyColor, state.awayNumberColor, state.awayTeamCode || state.awayTeamName);
         }
 
         const connection = new signalR.HubConnectionBuilder()

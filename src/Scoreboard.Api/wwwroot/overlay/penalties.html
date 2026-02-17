@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Penalty Shootout Overlay</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <style>
+        :root {
+            --board-bg: linear-gradient(180deg, #05295d 0%, #004b8b 50%, #05295d 100%);
+            --board-border: 3px solid rgba(255,255,255,0.15);
+            --accent-color: #FFD700;
+            --text-primary: #ffffff;
+            --glow-color: rgba(255,215,0,0.1);
+            --glow-shadow: rgba(255,215,0,0.5);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: transparent; font-family: 'Assistant', 'Segoe UI', 'Arial', sans-serif; overflow: hidden; }
+
+        .pen-container {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.9); opacity: 0;
+            filter: drop-shadow(0 8px 30px rgba(0, 0, 0, 0.7));
+            animation: penIn 0.8s ease-out forwards;
+        }
+        @keyframes penIn { to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+
+        .pen-card {
+            background: var(--board-bg);
+            border: var(--board-border);
+            border-radius: 8px;
+            padding: 14px 40px; text-align: center; min-width: 520px;
+            position: relative; overflow: hidden;
+        }
+        .pen-card::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, var(--glow-color) 0%, transparent 50%);
+            animation: glow 3s ease-in-out infinite;
+        }
+        @keyframes glow { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+        .pen-label {
+            font-size: 14px; color: var(--accent-color); text-transform: uppercase;
+            letter-spacing: 6px; margin-bottom: 12px; font-weight: 900;
+            position: relative; z-index: 1; text-shadow: 0 0 20px var(--glow-shadow);
+        }
+
+        .pen-content {
+            display: flex; align-items: flex-start; justify-content: center;
+            gap: 24px; position: relative; z-index: 1;
+        }
+
+        .pen-team { text-align: center; min-width: 160px; }
+
+        .pen-team-logo {
+            width: 38px; height: 38px; margin: 0 auto 4px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 900; color: #fff;
+        }
+        .pen-team-logo img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+        .pen-team-name {
+            font-size: 15px; font-weight: 900; color: var(--text-primary); text-transform: uppercase;
+            font-family: 'Arial Black', 'Impact', sans-serif; margin-bottom: 8px;
+        }
+
+        .pen-kicks {
+            display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;
+        }
+        .kick-dot {
+            width: 28px; height: 28px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 900; color: #fff;
+            transition: all 0.3s ease;
+        }
+        .kick-goal {
+            background: #4CAF50; border: 2px solid #66BB6A;
+            box-shadow: 0 0 8px rgba(76,175,80,0.5);
+        }
+        .kick-miss {
+            background: #f44336; border: 2px solid #EF5350;
+            box-shadow: 0 0 8px rgba(244,67,54,0.5);
+        }
+        .kick-pending {
+            background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.3); font-size: 11px;
+        }
+        /* Animate new kicks */
+        @keyframes kickPop {
+            0% { transform: scale(0); } 60% { transform: scale(1.2); } 100% { transform: scale(1); }
+        }
+        .kick-new { animation: kickPop 0.4s ease-out; }
+
+        .pen-score-center {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding-top: 45px;
+        }
+        .pen-score-row {
+            display: flex; align-items: center; gap: 10px;
+        }
+        .pen-score {
+            font-size: 42px; font-weight: 900; color: var(--accent-color);
+            font-family: 'Arial Black', sans-serif;
+            text-shadow: 0 0 20px var(--glow-shadow);
+            min-width: 35px; text-align: center;
+        }
+        .pen-score-sep { font-size: 42px; color: var(--text-primary); font-weight: 900; }
+
+        .pen-round-label {
+            font-size: 10px; color: rgba(255,255,255,0.5); text-transform: uppercase;
+            letter-spacing: 2px; margin-top: 4px;
+        }
+
+        .pen-winner {
+            position: relative; z-index: 1;
+            margin-top: 10px; font-size: 14px; color: var(--accent-color);
+            letter-spacing: 3px; text-transform: uppercase; font-weight: 900;
+            display: none;
+        }
+        .pen-winner.show {
+            display: block;
+            animation: winnerGlow 1s ease-out forwards;
+        }
+        @keyframes winnerGlow {
+            0% { opacity: 0; transform: scale(0.8); }
+            50% { text-shadow: 0 0 30px rgba(255,215,0,0.8); }
+            100% { opacity: 1; transform: scale(1); text-shadow: 0 0 15px rgba(255,215,0,0.4); }
+        }
+    </style>
+</head>
+<body>
+    <div class="pen-container">
+        <div class="pen-card">
+            <div class="pen-label">⚽ Penalty Shootout</div>
+            <div class="pen-content">
+                <div class="pen-team">
+                    <div class="pen-team-logo" id="homeLogo"></div>
+                    <div class="pen-team-name" id="homeTeamName">HOME</div>
+                    <div class="pen-kicks" id="homeKicks"></div>
+                </div>
+                <div class="pen-score-center">
+                    <div class="pen-score-row">
+                        <div class="pen-score" id="homeScore">0</div>
+                        <div class="pen-score-sep">-</div>
+                        <div class="pen-score" id="awayScore">0</div>
+                    </div>
+                    <div class="pen-round-label" id="roundLabel">Round 1 of 5</div>
+                </div>
+                <div class="pen-team">
+                    <div class="pen-team-logo" id="awayLogo"></div>
+                    <div class="pen-team-name" id="awayTeamName">OPPONENT</div>
+                    <div class="pen-kicks" id="awayKicks"></div>
+                </div>
+            </div>
+            <div class="pen-winner" id="penWinner"></div>
+        </div>
+    </div>
+
+    <script>
+        // ===== Theme System =====
+        const THEMES = {
+            DeepTide: {
+                '--board-bg': 'linear-gradient(180deg, #05295d 0%, #004b8b 50%, #05295d 100%)',
+                '--board-border': '3px solid rgba(255,255,255,0.15)',
+                '--accent-color': '#FFD700',
+                '--text-primary': '#ffffff',
+                '--glow-color': 'rgba(255,215,0,0.1)',
+                '--glow-shadow': 'rgba(255,215,0,0.5)'
+            }
+        };
+
+        function applyTheme() {
+            const params = new URLSearchParams(window.location.search);
+            const themeName = params.get('boardStyleName') || 'DeepTide';
+            const theme = THEMES[themeName] || THEMES.DeepTide;
+            const root = document.documentElement;
+            for (const [prop, value] of Object.entries(theme)) {
+                root.style.setProperty(prop, value);
+            }
+        }
+        applyTheme();
+
+        // ===== Stream Key =====
+        function getStreamKey() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('key')) return params.get('key');
+            const pathParts = window.location.pathname.split('/');
+            const last = pathParts[pathParts.length - 1];
+            if (last && !last.includes('.')) return last;
+            return null;
+        }
+        const streamKey = getStreamKey();
+
+        let previousKickCounts = { home: 0, away: 0 };
+
+        function renderLogo(elementId, logoUrl, jerseyColor, numberColor, teamCode) {
+            const el = document.getElementById(elementId);
+            if (logoUrl) {
+                el.innerHTML = `<img src="${logoUrl}" alt="${teamCode || ''}">`;
+            } else {
+                el.style.background = jerseyColor || '#333';
+                el.style.color = numberColor || '#fff';
+                el.style.borderRadius = '8px';
+                el.textContent = (teamCode || '?').substring(0, 3);
+            }
+        }
+
+        function renderKickDots(containerId, kicks, maxRounds, prevCount) {
+            const container = document.getElementById(containerId);
+            let html = '';
+            for (let i = 0; i < maxRounds; i++) {
+                if (i < kicks.length) {
+                    const isNew = i >= prevCount;
+                    if (kicks[i]) {
+                        html += `<div class="kick-dot kick-goal ${isNew ? 'kick-new' : ''}">✓</div>`;
+                    } else {
+                        html += `<div class="kick-dot kick-miss ${isNew ? 'kick-new' : ''}">✗</div>`;
+                    }
+                } else {
+                    html += `<div class="kick-dot kick-pending">${i + 1}</div>`;
+                }
+            }
+            container.innerHTML = html;
+        }
+
+        function checkWinner(homeKicks, awayKicks) {
+            const hg = homeKicks.filter(k => k).length;
+            const ag = awayKicks.filter(k => k).length;
+            const hl = homeKicks.length;
+            const al = awayKicks.length;
+
+            // Standard 5 rounds
+            if (hl <= 5 && al <= 5) {
+                const homeRemaining = 5 - hl;
+                const awayRemaining = 5 - al;
+                if (hl >= 1 && al >= 1 && ag > hg + homeRemaining) return 'away';
+                if (hl >= 1 && al >= 1 && hg > ag + awayRemaining) return 'home';
+                if (hl >= 5 && al >= 5 && hg !== ag) return hg > ag ? 'home' : 'away';
+            }
+            // Sudden death
+            if (hl > 5 && al > 5 && hl === al && hg !== ag) {
+                return hg > ag ? 'home' : 'away';
+            }
+            return null;
+        }
+
+        function updatePenalties(state) {
+            document.getElementById('homeTeamName').textContent = state.homeTeamName || 'HOME';
+            document.getElementById('awayTeamName').textContent = state.awayTeamName || 'OPPONENT';
+
+            renderLogo('homeLogo', state.homeLogoUrl, state.homeJerseyColor, state.homeNumberColor, state.homeTeamCode || state.homeTeamName);
+            renderLogo('awayLogo', state.awayLogoUrl, state.awayJerseyColor, state.awayNumberColor, state.awayTeamCode || state.awayTeamName);
+
+            // Parse penalty kicks from state
+            let homeKicks = [], awayKicks = [];
+            try { homeKicks = JSON.parse(state.penaltyHomeKicks || '[]'); } catch(e) {}
+            try { awayKicks = JSON.parse(state.penaltyAwayKicks || '[]'); } catch(e) {}
+
+            const homeGoals = homeKicks.filter(k => k).length;
+            const awayGoals = awayKicks.filter(k => k).length;
+            const maxRounds = Math.max(5, homeKicks.length, awayKicks.length);
+            const totalKicks = homeKicks.length + awayKicks.length;
+            const round = Math.min(Math.floor(totalKicks / 2) + 1, maxRounds);
+
+            document.getElementById('homeScore').textContent = homeGoals;
+            document.getElementById('awayScore').textContent = awayGoals;
+
+            const isSuddenDeath = homeKicks.length > 5 || awayKicks.length > 5;
+            document.getElementById('roundLabel').textContent = isSuddenDeath
+                ? `Sudden Death — Round ${round}`
+                : `Round ${round} of 5`;
+
+            renderKickDots('homeKicks', homeKicks, maxRounds, previousKickCounts.home);
+            renderKickDots('awayKicks', awayKicks, maxRounds, previousKickCounts.away);
+
+            previousKickCounts = { home: homeKicks.length, away: awayKicks.length };
+
+            // Winner
+            const winner = checkWinner(homeKicks, awayKicks);
+            const winnerEl = document.getElementById('penWinner');
+            if (winner) {
+                const name = winner === 'home' ? (state.homeTeamName || 'HOME') : (state.awayTeamName || 'AWAY');
+                winnerEl.textContent = `🏆 ${name} wins on penalties!`;
+                winnerEl.classList.add('show');
+            } else {
+                winnerEl.classList.remove('show');
+            }
+        }
+
+        // ===== SignalR =====
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl(`${window.location.origin}/hubs/game`)
+            .withAutomaticReconnect()
+            .build();
+
+        connection.on("GameStateUpdated", updatePenalties);
+        connection.onreconnected(() => { if (streamKey) connection.invoke("JoinStream", streamKey); });
+        connection.start().then(() => { if (streamKey) connection.invoke("JoinStream", streamKey); })
+            .catch(() => setTimeout(() => location.reload(), 5000));
+    </script>
+</body>
+</html>

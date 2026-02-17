@@ -9,7 +9,6 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Arial', sans-serif; background: #1a1a1a; padding: 15px; color: #fff; }
 
-        /* Login Screen */
         .login-screen {
             max-width: 380px; margin: 80px auto; background: #2a2a2a;
             border-radius: 10px; padding: 30px;
@@ -26,14 +25,13 @@
         }
         .login-error { color: #f44336; font-size: 12px; margin-top: 8px; }
 
-        /* Main Controller */
         .container {
             max-width: 480px; margin: 0 auto; background: #2a2a2a;
             border-radius: 10px; padding: 20px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.5); display: none;
         }
         h1 { text-align: center; font-size: 20px; margin-bottom: 15px; color: #4CAF50; text-transform: uppercase; letter-spacing: 2px; }
-        
+
         .user-bar {
             display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 10px; font-size: 11px; color: #888;
@@ -44,7 +42,6 @@
             text-align: center; font-size: 11px; margin-bottom: 15px; padding: 4px; border-radius: 4px; background: #333;
         }
 
-        /* Game Setup */
         .game-setup {
             background: #1a1a1a; padding: 15px; border-radius: 8px; margin-bottom: 15px;
             border: 1px solid #444; text-align: center; display: none;
@@ -56,10 +53,13 @@
         }
         .game-setup button { margin-top: 8px; }
 
-        /* Scoreboard Layout */
-        .scoreboard-wrapper { transform: scale(0.95); transform-origin: top center; width: 100%; display: flex; justify-content: center; }
+        .scoreboard-wrapper {
+            transform: scale(0.95); transform-origin: top center;
+            width: 100%; display: flex; justify-content: center;
+            overflow: hidden; margin-bottom: 10px;
+        }
         .scoreboard {
-            display: grid; grid-template-columns: 1fr auto 1fr; gap: 15px; margin-bottom: 15px;
+            display: grid; grid-template-columns: 1fr auto 1fr; gap: 15px;
             background: #1a1a1a; padding: 15px; border-radius: 8px; border: 2px solid #444; width: 285%;
         }
         .team { text-align: center; }
@@ -70,24 +70,22 @@
             text-align: center; font-weight: bold;
         }
         .score-display {
-            font-size: 28px; font-weight: bold; color: #FFD700; text-align: center;
+            font-size: 28px; font-weight: bold; color: #ffffff; text-align: center;
             margin: 10px 0; font-family: 'Impact', sans-serif;
         }
         .score-controls { display: flex; justify-content: center; gap: 5px; margin-top: 8px; }
 
-        /* Timer Section */
         .timer-section {
+            background: #111; border: 1px solid #444; border-radius: 6px;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            border-left: 2px solid #444; border-right: 2px solid #444; padding: 0 20px;
+            border-left: 2px solid #444; border-right: 2px solid #444; padding: 10px;
         }
-        .timer-display { font-size: 42px; font-weight: bold; color: #4CAF50; font-family: 'Courier New', monospace; margin-bottom: 8px; }
+        .timer-display { font-size: 42px; font-weight: bold; color: #4CAF50; font-family: 'Courier New', monospace; margin-bottom: 4px; }
         .timer-controls { display: flex; gap: 5px; margin-bottom: 6px; }
-        .timer-mode { font-size: 10px; color: #888; margin-top: 4px; }
+        .timer-mode { font-size: 10px; color: #888; margin-top: 4px; padding: 5px; }
 
-        /* boards */
         .control-row { display: flex; align-items: center; gap: 5px; margin-bottom: 6px; justify-content: center; }
 
-        /* Buttons */
         button {
             padding: 6px 12px; font-size: 11px; cursor: pointer; border-radius: 4px;
             border: none; background: #4CAF50; color: white; font-weight: bold; transition: all 0.2s;
@@ -105,35 +103,109 @@
 
         input.mini { width: 35px; padding: 4px; font-size: 11px; text-align: center; border: 1px solid #555; background: #333; color: #fff; border-radius: 3px; }
 
-        .update-names-btn { width: 100%; padding: 8px; font-size: 12px; margin-top: 10px; }
-        .panel-title { font-size: 11px; color: #4CAF50; margin-bottom: 8px; text-transform: uppercase; font-weight: bold; border-bottom: 1px solid #333; padding-bottom: 4px; }
+        .panel-title { font-size: 11px; color: #4CAF50; margin-bottom: 8px; text-transform: uppercase; font-weight: bold; border-bottom: 1px solid #333; }
 
-        /* Game Status Buttons */
-        .status-buttons { display: flex; gap: 5px; justify-content: center; margin: 10px 0; flex-wrap: wrap; }
-        .status-btn { padding: 6px 14px; font-size: 11px; border-radius: 4px; border: 1px solid #555; background: #333; color: #aaa; cursor: pointer; }
-        .status-btn.active { background: #4CAF50; color: #fff; border-color: #4CAF50; }
+        .period-badge {
+            display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: 11px;
+            font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;
+        }
+        .period-1h { background: #2196F3; color: #fff; }
+        .period-2h { background: #4CAF50; color: #fff; }
+        .period-ot1 { background: #ff9800; color: #fff; }
+        .period-ot2 { background: #f44336; color: #fff; }
+        .period-pen { background: #9C27B0; color: #fff; }
 
-        /* State Display */
+        .period-buttons { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }
+        .period-buttons button { padding: 3px 8px; font-size: 9px; }
+        .period-buttons button.active { box-shadow: 0 0 0 2px #FFD700; }
+
+        .half-settings { display: flex; gap: 10px; justify-content: center; align-items: center; margin-bottom: 6px; }
+        .half-settings label { font-size: 9px; color: #888; text-transform: uppercase; }
+        .half-settings input { width: 40px; padding: 3px; font-size: 11px; text-align: center; border: 1px solid #555; background: #333; color: #fff; border-radius: 3px; }
+
+        /* Toast */
+        .toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: #f44336; color: #fff; padding: 10px 20px; border-radius: 6px;
+            font-size: 13px; font-weight: bold; z-index: 9999;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            animation: toastIn 0.3s ease-out, toastOut 0.3s ease-in 2.7s forwards;
+            display: none;
+        }
+        .toast.warning { background: #ff9800; }
+        .toast.show { display: block; }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+        @keyframes toastOut { to { opacity: 0; transform: translateX(-50%) translateY(-20px); } }
+
+        /* ===== Penalty Section — ALWAYS VISIBLE standalone section ===== */
+        .penalty-section {
+            background: #1a1a1a; padding: 12px; border-radius: 8px; margin-top: 10px;
+            border: 2px solid #9C27B0;
+        }
+        .penalty-section .panel-title { color: #9C27B0; }
+        .penalty-grid {
+            display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: start;
+        }
+        .penalty-team { text-align: center; }
+        .penalty-team-name { font-size: 12px; font-weight: bold; color: #fff; margin-bottom: 6px; }
+        .penalty-kicks { display: flex; gap: 5px; justify-content: center; margin-bottom: 8px; flex-wrap: wrap; }
+        .kick-dot {
+            width: 24px; height: 24px; border-radius: 50%; border: 2px solid #555;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: bold; color: #fff;
+        }
+        .kick-goal { background: #4CAF50; border-color: #4CAF50; }
+        .kick-miss { background: #f44336; border-color: #f44336; }
+        .kick-pending { background: #333; border-color: #555; color: #555; }
+        .penalty-score { font-size: 28px; font-weight: bold; color: #FFD700; font-family: 'Impact', sans-serif; }
+        .penalty-score-sep { font-size: 28px; color: #888; }
+        .penalty-controls { display: flex; gap: 4px; justify-content: center; }
+        .penalty-winner {
+            text-align: center; font-size: 13px; color: #FFD700; font-weight: bold;
+            margin-top: 8px; display: none;
+        }
+
+        /* Appearance */
+        .appearance-inline { margin-top: 10px; border-top: 1px solid #333; padding-top: 8px; }
+        .appearance-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; justify-content: center; }
+        .appearance-row label { font-size: 9px; color: #888; text-transform: uppercase; min-width: 40px; text-align: right; }
+        .color-picker { width: 32px; height: 24px; border: 1px solid #555; border-radius: 3px; cursor: pointer; padding: 0; background: none; }
+        .logo-preview { width: 36px; height: 36px; border-radius: 4px; border: 1px solid #555; background: #333; object-fit: contain; }
+        .logo-placeholder {
+            width: 36px; height: 36px; border-radius: 4px; border: 1px dashed #555;
+            background: #333; display: inline-flex; align-items: center; justify-content: center;
+            font-size: 14px; color: #555;
+        }
+        .file-input-label { display: inline-block; padding: 2px 6px; font-size: 9px; background: #555; color: #fff; border-radius: 3px; cursor: pointer; }
+        .file-input-label:hover { background: #666; }
+        input[type="file"] { display: none; }
+
         .state-compact {
             background: #1a1a1a; padding: 8px; border-radius: 6px;
             font-size: 10px; line-height: 1.6; border: 1px solid #444; color: #aaa;
         }
         .state-compact strong { color: #4CAF50; }
 
-        /* OBS URLs Section */
         .obs-urls {
             background: #1a1a1a; padding: 10px; border-radius: 6px; margin-top: 10px;
             border: 1px solid #444; font-size: 10px;
         }
         .obs-urls .panel-title { margin-bottom: 6px; }
-        .obs-url-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-        .obs-url-row span { color: #aaa; }
-        .obs-url-row code { color: #4CAF50; font-size: 9px; word-break: break-all; }
-        .copy-btn { padding: 2px 6px; font-size: 9px; background: #555; }
+        .obs-url-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; gap: 6px; }
+        .obs-url-row span { color: #aaa; white-space: nowrap; }
+        .obs-url-row code { color: #4CAF50; font-size: 9px; word-break: break-all; flex: 1; }
+        .copy-btn { padding: 2px 6px; font-size: 9px; background: #555; white-space: nowrap; }
+
+        .theme-selector { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; justify-content: center; }
+        .theme-selector label { font-size: 10px; color: #888; text-transform: uppercase; }
+        .theme-selector select { padding: 4px 8px; font-size: 11px; border: 1px solid #555; background: #333; color: #fff; border-radius: 4px; }
+
+        .reset-row { text-align: center; margin-top: 6px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
-    <!-- LOGIN SCREEN -->
+    <div class="toast" id="toast"></div>
+
     <div class="login-screen" id="loginScreen">
         <h2>⚽ Scoreboard Login</h2>
         <input type="email" id="loginEmail" placeholder="Email Address" />
@@ -145,7 +217,6 @@
         </div>
     </div>
 
-    <!-- MAIN CONTROLLER -->
     <div class="container" id="mainController">
         <h1>⚽ Scoreboard Control</h1>
         <div class="user-bar">
@@ -154,7 +225,6 @@
         </div>
         <div id="connectionStatus">Connecting…</div>
 
-        <!-- Game Setup (shown when no active game) -->
         <div class="game-setup" id="gameSetup">
             <h3>Start New Game</h3>
             <input type="text" id="setupHomeName" placeholder="Home Team Name" value="" />
@@ -164,16 +234,7 @@
             <button class="btn-success" onclick="createGame()">⚽ Kick Off!</button>
         </div>
 
-        <!-- Active Game Controls -->
         <div id="activeGame" style="display: none;">
-            <!-- Status Buttons -->
-            <div class="status-buttons">
-                <button class="status-btn" data-status="PREGAME" onclick="setStatus('PREGAME')">Pre-Game</button>
-                <button class="status-btn active" data-status="LIVE" onclick="setStatus('LIVE')">Live</button>
-                <button class="status-btn" data-status="HALFTIME" onclick="setStatus('HALFTIME')">Half Time</button>
-                <button class="status-btn" data-status="FULLTIME" onclick="setStatus('FULLTIME')">Full Time</button>
-            </div>
-
             <div class="scoreboard-wrapper">
                 <div class="scoreboard">
                     <!-- Home Team -->
@@ -187,38 +248,67 @@
                         </div>
                         <div style="margin-top: 8px;">
                             <div class="control-row">
-                                <button class="btn-light-warning btn-sm" onclick="changeboard('home','yellow',1)">+1</button>
+                                <button class="btn-light-warning btn-sm" onclick="changeCard('home','yellow',1)">+1</button>
                                 <input id="homeYellowInput" class="mini" readonly />
-                                <button class="btn-light-warning btn-sm" onclick="changeboard('home','yellow',-1)">-1</button>
+                                <button class="btn-light-warning btn-sm" onclick="changeCard('home','yellow',-1)">-1</button>
                             </div>
                             <div class="control-row">
-                                <button class="btn-danger btn-sm" onclick="changeboard('home','red',1)">+1</button>
+                                <button class="btn-danger btn-sm" onclick="changeCard('home','red',1)">+1</button>
                                 <input id="homeRedInput" class="mini" readonly />
-                                <button class="btn-danger btn-sm" onclick="changeboard('home','red',-1)">-1</button>
+                                <button class="btn-danger btn-sm" onclick="changeCard('home','red',-1)">-1</button>
+                            </div>
+                        </div>
+                        <div class="appearance-inline">
+                            <div class="appearance-row">
+                                <label>Logo</label>
+                                <span id="homeLogoPreviewWrap"><span class="logo-placeholder">🏠</span></span>
+                                <label for="homeLogoFile" class="file-input-label">Browse</label>
+                                <input type="file" id="homeLogoFile" accept="image/*" onchange="previewLogo('home', this)" />
+                            </div>
+                            <div class="appearance-row">
+                                <label>Jersey</label>
+                                <input type="color" id="homeJerseyColor" class="color-picker" value="#8B0000" onchange="saveAppearance('home')" />
+                            </div>
+                            <div class="appearance-row">
+                                <label>Number</label>
+                                <input type="color" id="homeNumberColor" class="color-picker" value="#FFFFFF" onchange="saveAppearance('home')" />
                             </div>
                         </div>
                     </div>
 
-                    <!-- Timer -->
+                    <!-- Timer + Period -->
                     <div class="timer-section">
                         <div class="panel-title">⏱️ Timer</div>
                         <div class="timer-display" id="timerDisplay">00:00</div>
+                        <div class="timer-controls">
+                            <button class="btn-success btn-sm" onclick="handlePlay()">▶</button>
+                            <button class="btn-secondary btn-sm" onclick="apiPost('timer/stop')">⏸</button>
+                            <button class="btn-danger btn-sm" onclick="apiPost('timer/reset')">↻</button>
+                        </div>
                         <div class="control-row">
                             <input id="timerSetInput" class="mini" placeholder="00:00" style="width: 55px;" />
                             <button class="btn-primary btn-sm" onclick="setTimer()">Set</button>
-                        </div>
-                        <div class="timer-controls">
-                            <button class="btn-success btn-sm" onclick="apiPost('timer/start')">▶</button>
-                            <button class="btn-secondary btn-sm" onclick="apiPost('timer/stop')">⏸</button>
-                            <button class="btn-danger btn-sm" onclick="apiPost('timer/reset')">↻</button>
                         </div>
                         <div class="timer-mode" id="timerMode">Counting Up</div>
                         <div class="control-row">
                             <button class="btn-secondary btn-sm" onclick="setTimerMode(false)">↑ Up</button>
                             <button class="btn-secondary btn-sm" onclick="setTimerMode(true)">↓ Down</button>
                         </div>
-                        <div style="margin-top: 10px;">
-                            <button class="btn-danger btn-sm" style="width: 100%;" onclick="resetAll()">🔄 Reset All</button>
+                        <div class="half-settings">
+                            <label>Half (min)</label>
+                            <input id="halfLengthInput" value="45" onchange="saveHalfSettings()" />
+                            <label>OT (min)</label>
+                            <input id="otLengthInput" value="5" onchange="saveHalfSettings()" />
+                        </div>
+                        <div style="text-align: center; margin-bottom: 6px;">
+                            <span class="period-badge period-1h" id="periodBadge">1ST HALF</span>
+                        </div>
+                        <div class="period-buttons" id="allPeriodButtons">
+                            <button class="btn-primary btn-sm active" data-period="1H" onclick="setPeriod('1H')">1st Half</button>
+                            <button class="btn-success btn-sm" data-period="2H" onclick="setPeriod('2H')">2nd Half</button>
+                            <button class="btn-warning btn-sm" data-period="OT1" onclick="setPeriod('OT1')">OT 1</button>
+                            <button class="btn-danger btn-sm" data-period="OT2" onclick="setPeriod('OT2')">OT 2</button>
+                            <button class="btn-sm" style="background:#9C27B0;" data-period="PEN" onclick="setPeriod('PEN')">Penalties</button>
                         </div>
                     </div>
 
@@ -233,29 +323,87 @@
                         </div>
                         <div style="margin-top: 8px;">
                             <div class="control-row">
-                                <button class="btn-light-warning btn-sm" onclick="changeboard('away','yellow',1)">+1</button>
+                                <button class="btn-light-warning btn-sm" onclick="changeCard('away','yellow',1)">+1</button>
                                 <input id="awayYellowInput" class="mini" readonly />
-                                <button class="btn-light-warning btn-sm" onclick="changeboard('away','yellow',-1)">-1</button>
+                                <button class="btn-light-warning btn-sm" onclick="changeCard('away','yellow',-1)">-1</button>
                             </div>
                             <div class="control-row">
-                                <button class="btn-danger btn-sm" onclick="changeboard('away','red',1)">+1</button>
+                                <button class="btn-danger btn-sm" onclick="changeCard('away','red',1)">+1</button>
                                 <input id="awayRedInput" class="mini" readonly />
-                                <button class="btn-danger btn-sm" onclick="changeboard('away','red',-1)">-1</button>
+                                <button class="btn-danger btn-sm" onclick="changeCard('away','red',-1)">-1</button>
+                            </div>
+                        </div>
+                        <div class="appearance-inline">
+                            <div class="appearance-row">
+                                <label>Logo</label>
+                                <span id="awayLogoPreviewWrap"><span class="logo-placeholder">👤</span></span>
+                                <label for="awayLogoFile" class="file-input-label">Browse</label>
+                                <input type="file" id="awayLogoFile" accept="image/*" onchange="previewLogo('away', this)" />
+                            </div>
+                            <div class="appearance-row">
+                                <label>Jersey</label>
+                                <input type="color" id="awayJerseyColor" class="color-picker" value="#FFFFFF" onchange="saveAppearance('away')" />
+                            </div>
+                            <div class="appearance-row">
+                                <label>Number</label>
+                                <input type="color" id="awayNumberColor" class="color-picker" value="#003366" onchange="saveAppearance('away')" />
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <button class="btn-primary update-names-btn" onclick="updateTeamNames()">Update Team Names</button>
+            <div class="reset-row">
+                <button class="btn-danger btn-sm" onclick="resetAll()">🔄 Reset All</button>
+            </div>
 
-            <!-- OBS URLs -->
+            <!-- ===== PENALTY SECTION — ALWAYS VISIBLE for testing ===== -->
+            <div class="penalty-section" id="penaltySection">
+                <div class="panel-title">⚽ Penalty Shootout</div>
+                <div class="penalty-grid">
+                    <div class="penalty-team">
+                        <div class="penalty-team-name" id="penHomeTeamName">HOME</div>
+                        <div class="penalty-kicks" id="penHomeKicks"></div>
+                        <div class="penalty-controls">
+                            <button class="btn-success btn-sm" onclick="recordPenalty('home', true)">⚽ Goal</button>
+                            <button class="btn-danger btn-sm" onclick="recordPenalty('home', false)">✗ Miss</button>
+                        </div>
+                    </div>
+                    <div style="text-align: center; padding-top: 20px;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span class="penalty-score" id="penHomeScore">0</span>
+                            <span class="penalty-score-sep">-</span>
+                            <span class="penalty-score" id="penAwayScore">0</span>
+                        </div>
+                        <div style="margin-top: 8px; font-size: 10px; color: #888;" id="penRoundLabel">Round 1</div>
+                    </div>
+                    <div class="penalty-team">
+                        <div class="penalty-team-name" id="penAwayTeamName">OPPONENT</div>
+                        <div class="penalty-kicks" id="penAwayKicks"></div>
+                        <div class="penalty-controls">
+                            <button class="btn-success btn-sm" onclick="recordPenalty('away', true)">⚽ Goal</button>
+                            <button class="btn-danger btn-sm" onclick="recordPenalty('away', false)">✗ Miss</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="penalty-winner" id="penaltyWinner"></div>
+                <div style="text-align: center; margin-top: 8px;">
+                    <button class="btn-secondary btn-sm" onclick="undoLastPenalty()">↩ Undo Last</button>
+                    <button class="btn-danger btn-sm" onclick="resetPenalties()">🔄 Reset PKs</button>
+                </div>
+            </div>
+
             <div class="obs-urls" id="obsUrls">
                 <div class="panel-title">📺 OBS Browser Source URLs</div>
+                <div class="theme-selector">
+                    <label>Overlay Theme:</label>
+                    <select id="themeSelect" onchange="updateObsUrls()">
+                        <option value="DeepTide" selected>🌊 DeepTide</option>
+                    </select>
+                </div>
                 <div id="obsUrlList"></div>
             </div>
 
-            <!-- State Display -->
             <div class="state-compact" id="stateBox">Waiting for data...</div>
         </div>
     </div>
@@ -269,6 +417,22 @@
         let unsavedFields = new Set();
         let connection = null;
         let localTimerInterval = null;
+        let pendingLogos = { home: null, away: null };
+
+        let currentPeriod = '1H';
+        let halfLengthMinutes = parseInt(localStorage.getItem('sc_halfLength')) || 45;
+        let otLengthMinutes = parseInt(localStorage.getItem('sc_otLength')) || 5;
+        let periodAutoStopped = false;
+
+        let penaltyHomeKicks = [];
+        let penaltyAwayKicks = [];
+
+        function showToast(msg, type = 'error') {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.className = `toast show ${type === 'warning' ? 'warning' : ''}`;
+            setTimeout(() => { toast.className = 'toast'; }, 3000);
+        }
 
         // ---- AUTH ----
         function showLogin() {
@@ -297,39 +461,49 @@
                     localStorage.setItem('sc_streamKey', streamKey);
                     localStorage.setItem('sc_displayName', displayName);
                     showController();
-                } else {
-                    document.getElementById('loginError').textContent = data.message || 'Login failed';
-                }
+                } else { document.getElementById('loginError').textContent = data.message || 'Login failed'; }
             } catch (e) { document.getElementById('loginError').textContent = 'Connection error'; }
         }
 
         function logout() {
-            localStorage.removeItem('sc_token');
-            localStorage.removeItem('sc_streamKey');
-            localStorage.removeItem('sc_displayName');
+            localStorage.removeItem('sc_token'); localStorage.removeItem('sc_streamKey'); localStorage.removeItem('sc_displayName');
             token = null; streamKey = null;
             if (connection) connection.stop();
             showLogin();
         }
 
-        // ---- CONTROLLER ----
-        async function initController() {
-            // Show OBS URLs
+        // ---- OBS URLs ----
+        function updateObsUrls() {
             const base = window.location.origin;
+            const theme = document.getElementById('themeSelect').value;
+            const params = `key=${streamKey}&boardStyleName=${theme}`;
             document.getElementById('obsUrlList').innerHTML = `
-                <div class="obs-url-row"><span>Pre-Game:</span> <code>${base}/overlay/pregame.html?key=${streamKey}</code></div>
-                <div class="obs-url-row"><span>Scoreboard:</span> <code>${base}/overlay/scoreboard.html?key=${streamKey}</code></div>
-                <div class="obs-url-row"><span>Half Time:</span> <code>${base}/overlay/halftime.html?key=${streamKey}</code></div>
-                <div class="obs-url-row"><span>Full Time:</span> <code>${base}/overlay/fulltime.html?key=${streamKey}</code></div>
+                <div class="obs-url-row"><span>Pre-Game:</span> <code id="url-pregame">${base}/overlay/pregame.html?${params}</code> <button class="copy-btn btn-sm" onclick="copyUrl('url-pregame')">Copy</button></div>
+                <div class="obs-url-row"><span>Scorecard:</span> <code id="url-scoreboard">${base}/overlay/scoreboard.html?${params}</code> <button class="copy-btn btn-sm" onclick="copyUrl('url-scoreboard')">Copy</button></div>
+                <div class="obs-url-row"><span>Half Time:</span> <code id="url-halftime">${base}/overlay/halftime.html?${params}</code> <button class="copy-btn btn-sm" onclick="copyUrl('url-halftime')">Copy</button></div>
+                <div class="obs-url-row"><span>Full Time:</span> <code id="url-fulltime">${base}/overlay/fulltime.html?${params}</code> <button class="copy-btn btn-sm" onclick="copyUrl('url-fulltime')">Copy</button></div>
+                <div class="obs-url-row"><span>Penalties:</span> <code id="url-penalties">${base}/overlay/penalties.html?${params}</code> <button class="copy-btn btn-sm" onclick="copyUrl('url-penalties')">Copy</button></div>
             `;
+        }
 
-            // Check for active game
+        function copyUrl(elementId) {
+            const text = document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById(elementId).nextElementSibling;
+                const orig = btn.textContent;
+                btn.textContent = '✓'; btn.style.background = '#4CAF50';
+                setTimeout(() => { btn.textContent = orig; btn.style.background = '#555'; }, 1500);
+            });
+        }
+
+        // ---- INIT ----
+        async function initController() {
+            document.getElementById('halfLengthInput').value = halfLengthMinutes;
+            document.getElementById('otLengthInput').value = otLengthMinutes;
+            updateObsUrls();
             await loadGameState();
-
-            // Connect SignalR
             connectSignalR();
-
-            // Track unsaved fields
+            initNameInputs();
             ['homeNameInput', 'awayNameInput'].forEach(id => {
                 document.getElementById(id)?.addEventListener('input', () => unsavedFields.add(id));
             });
@@ -341,23 +515,18 @@
                 if (res.ok) {
                     const state = await res.json();
                     lastState = state;
+                    if (state.currentPeriod) currentPeriod = state.currentPeriod;
+                    if (state.halfLengthMinutes) { halfLengthMinutes = state.halfLengthMinutes; document.getElementById('halfLengthInput').value = halfLengthMinutes; }
+                    if (state.otLengthMinutes) { otLengthMinutes = state.otLengthMinutes; document.getElementById('otLengthInput').value = otLengthMinutes; }
+                    if (state.penaltyHomeKicks) { try { penaltyHomeKicks = JSON.parse(state.penaltyHomeKicks); } catch(e) { penaltyHomeKicks = []; } }
+                    if (state.penaltyAwayKicks) { try { penaltyAwayKicks = JSON.parse(state.penaltyAwayKicks); } catch(e) { penaltyAwayKicks = []; } }
                     showActiveGame(state);
-                } else {
-                    showGameSetup();
-                }
+                } else { showGameSetup(); }
             } catch { showGameSetup(); }
         }
 
-        function showGameSetup() {
-            document.getElementById('gameSetup').style.display = 'block';
-            document.getElementById('activeGame').style.display = 'none';
-        }
-
-        function showActiveGame(state) {
-            document.getElementById('gameSetup').style.display = 'none';
-            document.getElementById('activeGame').style.display = 'block';
-            applyState(state);
-        }
+        function showGameSetup() { document.getElementById('gameSetup').style.display = 'block'; document.getElementById('activeGame').style.display = 'none'; }
+        function showActiveGame(state) { document.getElementById('gameSetup').style.display = 'none'; document.getElementById('activeGame').style.display = 'block'; applyState(state); }
 
         async function createGame() {
             const homeName = document.getElementById('setupHomeName').value || 'Home';
@@ -367,7 +536,9 @@
                 method: 'POST', headers: { ...authHeaders(), 'Content-Type': 'application/json' },
                 body: JSON.stringify({ homeTeamName: homeName, awayTeamName: awayName, venue })
             });
+            currentPeriod = '1H'; penaltyHomeKicks = []; penaltyAwayKicks = []; periodAutoStopped = false;
             await loadGameState();
+            saveHalfSettings();
         }
 
         // ---- SignalR ----
@@ -376,22 +547,17 @@
                 .withUrl(`${window.location.origin}/hubs/game`, { accessTokenFactory: () => token })
                 .withAutomaticReconnect()
                 .build();
-
             connection.on("GameStateUpdated", (state) => {
                 lastState = state;
+                if (state.currentPeriod) currentPeriod = state.currentPeriod;
+                if (state.penaltyHomeKicks) { try { penaltyHomeKicks = JSON.parse(state.penaltyHomeKicks); } catch(e) {} }
+                if (state.penaltyAwayKicks) { try { penaltyAwayKicks = JSON.parse(state.penaltyAwayKicks); } catch(e) {} }
                 applyState(state);
             });
-
             connection.onreconnecting(() => setConnectionStatus(false));
-            connection.onreconnected(() => {
-                setConnectionStatus(true);
-                if (streamKey) connection.invoke("JoinStream", streamKey);
-            });
-
-            connection.start().then(() => {
-                setConnectionStatus(true);
-                if (streamKey) connection.invoke("JoinStream", streamKey);
-            }).catch(() => setConnectionStatus(false));
+            connection.onreconnected(() => { setConnectionStatus(true); if (streamKey) connection.invoke("JoinStream", streamKey); });
+            connection.start().then(() => { setConnectionStatus(true); if (streamKey) connection.invoke("JoinStream", streamKey); })
+                .catch(() => setConnectionStatus(false));
         }
 
         function setConnectionStatus(connected) {
@@ -400,7 +566,85 @@
             el.style.color = connected ? '#4CAF50' : '#f44336';
         }
 
-        // ---- Client-side Timer ----
+        // ===== PLAY — countdown-at-zero guard =====
+        async function handlePlay() {
+            if (lastState) {
+                const secs = computeTimer(lastState);
+                if (lastState.timerDirection === 'DOWN' && secs <= 0) {
+                    showToast('⚠️ Timer is at 0:00 in countdown mode. Reset or set a new time before starting.', 'warning');
+                    return;
+                }
+            }
+            await apiPost('timer/start');
+            periodAutoStopped = false;
+        }
+
+        // ===== PERIOD MANAGEMENT =====
+        function saveHalfSettings() {
+            halfLengthMinutes = parseInt(document.getElementById('halfLengthInput').value) || 45;
+            otLengthMinutes = parseInt(document.getElementById('otLengthInput').value) || 5;
+            localStorage.setItem('sc_halfLength', halfLengthMinutes);
+            localStorage.setItem('sc_otLength', otLengthMinutes);
+            apiPost('period', { currentPeriod, halfLengthMinutes, otLengthMinutes });
+        }
+
+        async function setPeriod(period) {
+            currentPeriod = period;
+            periodAutoStopped = false;
+            updatePeriodUI();
+            await apiPost('period', { currentPeriod: period, halfLengthMinutes, otLengthMinutes });
+            await apiPost('timer/reset');
+        }
+
+        function getPeriodEndSeconds() {
+            switch (currentPeriod) {
+                case '1H': case '2H': return halfLengthMinutes * 60;
+                case 'OT1': case 'OT2': return otLengthMinutes * 60;
+                default: return 0;
+            }
+        }
+
+        function getPeriodLabel(period) {
+            const labels = { '1H': '1ST HALF', '2H': '2ND HALF', 'OT1': 'OVERTIME 1', 'OT2': 'OVERTIME 2', 'PEN': 'PENALTIES' };
+            return labels[period] || '1ST HALF';
+        }
+        function getPeriodClass(period) {
+            const classes = { '1H': 'period-1h', '2H': 'period-2h', 'OT1': 'period-ot1', 'OT2': 'period-ot2', 'PEN': 'period-pen' };
+            return classes[period] || 'period-1h';
+        }
+        function getNextPeriod(current) {
+            const order = ['1H', '2H', 'OT1', 'OT2', 'PEN'];
+            const idx = order.indexOf(current);
+            return idx < order.length - 1 ? order[idx + 1] : null;
+        }
+
+        function updatePeriodUI() {
+            const badge = document.getElementById('periodBadge');
+            badge.textContent = getPeriodLabel(currentPeriod);
+            badge.className = `period-badge ${getPeriodClass(currentPeriod)}`;
+
+            document.querySelectorAll('#allPeriodButtons button').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.period === currentPeriod);
+            });
+
+            // NOTE: penalty section is ALWAYS visible now — no show/hide toggle
+        }
+
+        function checkPeriodEnd() {
+            if (!lastState || !lastState.isTimerRunning || periodAutoStopped) return;
+            if (lastState.timerDirection === 'DOWN') return;
+            const secs = computeTimer(lastState);
+            const periodEnd = getPeriodEndSeconds();
+            if (periodEnd > 0 && secs >= periodEnd) {
+                periodAutoStopped = true;
+                apiPost('timer/stop');
+                const next = getNextPeriod(currentPeriod);
+                if (next) showToast(`⏱️ ${getPeriodLabel(currentPeriod)} complete! Press "${getPeriodLabel(next)}" when ready.`, 'warning');
+                else showToast(`⏱️ ${getPeriodLabel(currentPeriod)} complete!`, 'warning');
+            }
+        }
+
+        // ---- Timer ----
         function computeTimer(state) {
             if (!state) return 0;
             let elapsed = state.elapsedSecondsAtPause || 0;
@@ -417,56 +661,156 @@
             localTimerInterval = setInterval(() => {
                 if (lastState?.isTimerRunning) {
                     document.getElementById('timerDisplay').textContent = formatTime(computeTimer(lastState));
+                    checkPeriodEnd();
                 }
             }, 200);
         }
 
-        // ---- Apply State to UI ----
+        // ===== PENALTIES =====
+        async function recordPenalty(team, isGoal) {
+            if (team === 'home') penaltyHomeKicks.push(isGoal);
+            else penaltyAwayKicks.push(isGoal);
+            renderPenalties();
+            await apiPost('penalty/kick', {
+                team, result: isGoal,
+                penaltyHomeKicks: JSON.stringify(penaltyHomeKicks),
+                penaltyAwayKicks: JSON.stringify(penaltyAwayKicks)
+            });
+        }
+
+        function undoLastPenalty() {
+            if (penaltyAwayKicks.length > penaltyHomeKicks.length) penaltyAwayKicks.pop();
+            else if (penaltyHomeKicks.length > 0) penaltyHomeKicks.pop();
+            renderPenalties();
+            apiPost('penalty/kick', { team: 'undo', penaltyHomeKicks: JSON.stringify(penaltyHomeKicks), penaltyAwayKicks: JSON.stringify(penaltyAwayKicks) });
+        }
+
+        function resetPenalties() {
+            if (!confirm('Reset all penalty kicks?')) return;
+            penaltyHomeKicks = []; penaltyAwayKicks = [];
+            renderPenalties();
+            apiPost('penalty/reset');
+        }
+
+        function renderPenalties() {
+            const homeGoals = penaltyHomeKicks.filter(k => k).length;
+            const awayGoals = penaltyAwayKicks.filter(k => k).length;
+            const maxRounds = Math.max(5, penaltyHomeKicks.length, penaltyAwayKicks.length);
+            const totalKicks = penaltyHomeKicks.length + penaltyAwayKicks.length;
+            const round = Math.floor(totalKicks / 2) + 1;
+
+            document.getElementById('penHomeScore').textContent = homeGoals;
+            document.getElementById('penAwayScore').textContent = awayGoals;
+            document.getElementById('penRoundLabel').textContent = `Round ${Math.min(round, maxRounds)}`;
+            document.getElementById('penHomeTeamName').textContent = lastState?.homeTeamName || 'HOME';
+            document.getElementById('penAwayTeamName').textContent = lastState?.awayTeamName || 'OPPONENT';
+
+            renderKickDots('penHomeKicks', penaltyHomeKicks, maxRounds);
+            renderKickDots('penAwayKicks', penaltyAwayKicks, maxRounds);
+
+            const winner = checkPenaltyWinner();
+            const winnerEl = document.getElementById('penaltyWinner');
+            if (winner) { winnerEl.textContent = `🏆 ${winner} wins on penalties!`; winnerEl.style.display = 'block'; }
+            else { winnerEl.style.display = 'none'; }
+        }
+
+        function renderKickDots(elementId, kicks, maxRounds) {
+            const container = document.getElementById(elementId);
+            let html = '';
+            for (let i = 0; i < maxRounds; i++) {
+                if (i < kicks.length) {
+                    html += kicks[i] ? `<div class="kick-dot kick-goal">✓</div>` : `<div class="kick-dot kick-miss">✗</div>`;
+                } else {
+                    html += `<div class="kick-dot kick-pending">${i + 1}</div>`;
+                }
+            }
+            container.innerHTML = html;
+        }
+
+        function checkPenaltyWinner() {
+            const hk = penaltyHomeKicks, ak = penaltyAwayKicks;
+            const hg = hk.filter(k => k).length, ag = ak.filter(k => k).length;
+            const hl = hk.length, al = ak.length;
+            if (hl <= 5 && al <= 5) {
+                const homeRemaining = 5 - hl, awayRemaining = 5 - al;
+                if (hl >= 1 && al >= 1 && ag > hg + homeRemaining) return lastState?.awayTeamName || 'AWAY';
+                if (hl >= 1 && al >= 1 && hg > ag + awayRemaining) return lastState?.homeTeamName || 'HOME';
+                if (hl >= 5 && al >= 5 && hg !== ag) return hg > ag ? (lastState?.homeTeamName || 'HOME') : (lastState?.awayTeamName || 'AWAY');
+            }
+            if (hl > 5 && al > 5 && hl === al && hg !== ag) return hg > ag ? (lastState?.homeTeamName || 'HOME') : (lastState?.awayTeamName || 'AWAY');
+            return null;
+        }
+
+        // ---- Apply State ----
         function applyState(state) {
             if (!state) return;
-
-            function setIfNotEditing(id, val) {
-                const el = document.getElementById(id);
-                if (el && document.activeElement !== el && !unsavedFields.has(id)) el.value = val;
-            }
-
+            function setIfNotEditing(id, val) { const el = document.getElementById(id); if (el && document.activeElement !== el && !unsavedFields.has(id)) el.value = val; }
             setIfNotEditing('homeNameInput', state.homeTeamName);
             setIfNotEditing('awayNameInput', state.awayTeamName);
-
             document.getElementById('homeScoreDisplay').textContent = state.homeScore;
             document.getElementById('awayScoreDisplay').textContent = state.awayScore;
-            document.getElementById('homeYellowInput').value = state.homeYellowboards;
-            document.getElementById('homeRedInput').value = state.homeRedboards;
-            document.getElementById('awayYellowInput').value = state.awayYellowboards;
-            document.getElementById('awayRedInput').value = state.awayRedboards;
-
+            document.getElementById('homeYellowInput').value = state.homeYellowCards;
+            document.getElementById('homeRedInput').value = state.homeRedCards;
+            document.getElementById('awayYellowInput').value = state.awayYellowCards;
+            document.getElementById('awayRedInput').value = state.awayRedCards;
             const secs = computeTimer(state);
             document.getElementById('timerDisplay').textContent = formatTime(secs);
             document.getElementById('timerMode').textContent = state.timerDirection === 'DOWN' ? 'Counting Down' : 'Counting Up';
-
             if (state.isTimerRunning) startLocalTimer();
             else if (localTimerInterval) { clearInterval(localTimerInterval); localTimerInterval = null; }
-
-            // Status buttons
-            document.querySelectorAll('.status-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.status === state.gameStatus);
-            });
-
-            // State box
+            setColorIfNotActive('homeJerseyColor', state.homeJerseyColor || '#8B0000');
+            setColorIfNotActive('homeNumberColor', state.homeNumberColor || '#FFFFFF');
+            setColorIfNotActive('awayJerseyColor', state.awayJerseyColor || '#FFFFFF');
+            setColorIfNotActive('awayNumberColor', state.awayNumberColor || '#003366');
+            setLogoPreview('home', state.homeLogoUrl);
+            setLogoPreview('away', state.awayLogoUrl);
+            updatePeriodUI();
+            renderPenalties();
             document.getElementById('stateBox').innerHTML = `
                 <strong>${state.homeTeamName}</strong> ${state.homeScore} - ${state.awayScore} <strong>${state.awayTeamName}</strong> |
                 Timer: ${formatTime(secs)} (${state.timerDirection === 'DOWN' ? 'Down' : 'Up'}) ${state.isTimerRunning ? '▶' : '⏸'} |
-                Status: ${state.gameStatus}
+                Period: <strong>${getPeriodLabel(currentPeriod)}</strong>
             `;
         }
 
-        // ---- API Helpers ----
-        function authHeaders() { return { 'Authorization': `Bearer ${token}` }; }
+        function setColorIfNotActive(id, color) { const el = document.getElementById(id); if (el && document.activeElement !== el) el.value = color; }
 
+        function setLogoPreview(team, dataUrl) {
+            const wrap = document.getElementById(`${team}LogoPreviewWrap`);
+            if (!dataUrl) wrap.innerHTML = `<span class="logo-placeholder">${team === 'home' ? '🏠' : '👤'}</span>`;
+            else wrap.innerHTML = `<img src="${dataUrl}" class="logo-preview" alt="${team} logo" />`;
+        }
+
+        function previewLogo(team, input) {
+            const file = input.files[0]; if (!file) return;
+            if (file.size > 2 * 1024 * 1024) { alert('Logo must be under 2MB'); return; }
+            const reader = new FileReader();
+            reader.onload = (e) => { pendingLogos[team] = e.target.result; setLogoPreview(team, e.target.result); saveAppearance(team); };
+            reader.readAsDataURL(file);
+        }
+
+        async function saveAppearance(team) {
+            await apiPost(`team/${team}/appearance`, {
+                jerseyColor: document.getElementById(`${team}JerseyColor`).value,
+                numberColor: document.getElementById(`${team}NumberColor`).value,
+                logoData: pendingLogos[team] || undefined
+            });
+            pendingLogos[team] = null;
+        }
+
+        function initNameInputs() {
+            document.getElementById('homeNameInput').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); apiPost('team/home/name', { name: e.target.value }); unsavedFields.delete('homeNameInput'); e.target.blur(); }
+            });
+            document.getElementById('awayNameInput').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); apiPost('team/away/name', { name: e.target.value }); unsavedFields.delete('awayNameInput'); e.target.blur(); }
+            });
+        }
+
+        function authHeaders() { return { 'Authorization': `Bearer ${token}` }; }
         async function apiPost(path, body) {
             await fetch(`${API_BASE}/game/${path}`, {
-                method: 'POST',
-                headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+                method: 'POST', headers: { ...authHeaders(), 'Content-Type': 'application/json' },
                 body: body ? JSON.stringify(body) : undefined
             });
         }
@@ -476,35 +820,20 @@
             const current = team === 'home' ? lastState.homeScore : lastState.awayScore;
             await apiPost(`score/${team}`, { score: Math.max(0, current + delta) });
         }
-
-        async function changeboard(team, boardType, delta) {
+        async function changeCard(team, cardType, delta) {
             if (!lastState) return;
             let current;
-            if (team === 'home') current = boardType === 'yellow' ? lastState.homeYellowboards : lastState.homeRedboards;
-            else current = boardType === 'yellow' ? lastState.awayYellowboards : lastState.awayRedboards;
-            await apiPost(`boards/${team}/${boardType}`, { count: Math.max(0, current + delta) });
+            if (team === 'home') current = cardType === 'yellow' ? lastState.homeYellowCards : lastState.homeRedCards;
+            else current = cardType === 'yellow' ? lastState.awayYellowCards : lastState.awayRedCards;
+            await apiPost(`cards/${team}/${cardType}`, { count: Math.max(0, current + delta) });
         }
-
-        async function updateTeamNames() {
-            const home = document.getElementById('homeNameInput').value;
-            const away = document.getElementById('awayNameInput').value;
-            if (home) await apiPost('team/home/name', { name: home });
-            if (away) await apiPost('team/away/name', { name: away });
-            unsavedFields.clear();
-        }
-
         async function setTimer() {
-            const val = document.getElementById('timerSetInput').value.trim();
-            if (!val) return;
-            const parts = val.split(':');
-            if (parts.length !== 2) return;
-            const totalSec = parseInt(parts[0]) * 60 + parseInt(parts[1]);
-            if (isNaN(totalSec)) return;
+            const val = document.getElementById('timerSetInput').value.trim(); if (!val) return;
+            const parts = val.split(':'); if (parts.length !== 2) return;
+            const totalSec = parseInt(parts[0]) * 60 + parseInt(parts[1]); if (isNaN(totalSec)) return;
             await apiPost('timer/set', { seconds: totalSec });
         }
-
         async function setTimerMode(countDown) { await apiPost('timer/mode', { countDown }); }
-        async function setStatus(status) { await apiPost('status', { status }); }
         async function resetAll() { if (confirm('Reset entire game?')) await apiPost('reset'); }
 
         function formatTime(sec) {
@@ -513,7 +842,6 @@
             return `${m}:${s}`;
         }
 
-        // ---- Init ----
         if (token) showController(); else showLogin();
     </script>
 </body>

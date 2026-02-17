@@ -1,3 +1,12 @@
+SET ANSI_NULLS ON;
+GO
+SET QUOTED_IDENTIFIER ON;
+GO
+
+IF OBJECT_ID(N'dbo.Game', N'U') IS NOT NULL
+    DROP TABLE [dbo].[Game];
+GO
+
 CREATE TABLE [dbo].[Game]
 (
     [GameId]            INT             NOT NULL    IDENTITY(1,1),
@@ -9,15 +18,15 @@ CREATE TABLE [dbo].[Game]
     [Venue]             NVARCHAR(200)   NULL,
 
     -- Timer State (persisted for crash recovery)
-    [TimerStartedAtUtc]     DATETIME2(7)    NULL,   -- When timer was last started
-    [ElapsedSecondsAtPause] INT             NOT NULL DEFAULT 0,  -- Accumulated seconds when paused
+    [TimerStartedAtUtc]     DATETIME2(7)    NULL,
+    [ElapsedSecondsAtPause] INT             NOT NULL DEFAULT 0,
     [TimerIsRunning]        BIT             NOT NULL DEFAULT 0,
-    [TimerDirection]        VARCHAR(4)      NOT NULL DEFAULT 'UP',  -- 'UP' or 'DOWN'
-    [TimerSetSeconds]       INT             NOT NULL DEFAULT 0,    -- For countdown: total seconds set
+    [TimerDirection]        VARCHAR(4)      NOT NULL DEFAULT 'UP',
+    [TimerSetSeconds]       INT             NOT NULL DEFAULT 0,
 
     -- Game State
-    [CurrentPeriod]     INT             NOT NULL    DEFAULT 1,     -- 1 = 1st half, 2 = 2nd half, etc.
-    [GameStatus]        VARCHAR(20)     NOT NULL    DEFAULT 'PREGAME',  -- PREGAME, LIVE, HALFTIME, FULLTIME
+    [CurrentPeriod]     INT             NOT NULL    DEFAULT 1,
+    [GameStatus]        VARCHAR(20)     NOT NULL    DEFAULT 'PREGAME',
     [IsActive]          BIT             NOT NULL    DEFAULT 1,
 
     [CreatedDateUtc]    DATETIME2(7)    NOT NULL    DEFAULT SYSUTCDATETIME(),
@@ -38,7 +47,7 @@ CREATE TABLE [dbo].[Game]
 );
 GO
 
--- Index: Only one active game per streamer at a time
+-- Filtered index requires QUOTED_IDENTIFIER ON (set above)
 CREATE UNIQUE NONCLUSTERED INDEX [UX_Game_ActivePerStreamer]
     ON [dbo].[Game]([StreamerId])
     WHERE [IsActive] = 1 AND [GameStatus] <> 'FULLTIME';

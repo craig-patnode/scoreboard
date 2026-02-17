@@ -87,7 +87,7 @@ public class Team
     public int TeamId { get; set; }
     public int StreamerId { get; set; }
     public string TeamName { get; set; } = string.Empty;
-    public string? ShortName { get; set; }
+    public string TeamCode { get; set; } = "HOME";  // "HOME" or "OPP" - stable lookup key
     public string? JerseyColor { get; set; }
     public string? NumberColor { get; set; }
     public string? LogoUrl { get; set; }

@@ -233,4 +233,26 @@ public class GameController : ControllerBase
         await BroadcastStateAsync();
         return Ok();
     }
+
+    // ---- Team Appearance ----
+
+    [Authorize]
+    [HttpPost("team/home/appearance")]
+    [RequestSizeLimit(5_000_000)] // 5MB max for logo uploads
+    public async Task<IActionResult> SetHomeTeamAppearance([FromBody] UpdateTeamAppearanceRequest request)
+    {
+        await _gameService.UpdateTeamAppearanceAsync(GetStreamerId(), true, request);
+        await BroadcastStateAsync();
+        return Ok();
+    }
+
+    [Authorize]
+    [HttpPost("team/away/appearance")]
+    [RequestSizeLimit(5_000_000)]
+    public async Task<IActionResult> SetAwayTeamAppearance([FromBody] UpdateTeamAppearanceRequest request)
+    {
+        await _gameService.UpdateTeamAppearanceAsync(GetStreamerId(), false, request);
+        await BroadcastStateAsync();
+        return Ok();
+    }
 }
