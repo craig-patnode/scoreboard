@@ -54,9 +54,10 @@
         .timer-box.period-expired .period-label { color: #333; }
 
         .divider-left {
-            width: 43px; background: linear-gradient(180deg, #ffffff 0%, #ffffff 100%);
+            width: 43px; background: #ffffff;
             position: relative; z-index: 4;
         }
+        .divider-left.period-expired { background: #FFD700; }
 
         .main-bar {
             background: var(--board-bg);
@@ -83,7 +84,7 @@
         /* Home logo: left edge of home section, overlapping outward */
         .team-logo-home {
             position: absolute;
-            top: 50%; left: 110px;
+            top: 50%; left: 105px;
             transform: translateY(-50%);
             width: 85px; height: 85px;
             z-index: 10;
@@ -94,7 +95,7 @@
         /* Away logo: right edge of away section, overlapping outward */
         .team-logo-away {
             position: absolute;
-            top: 50%; right: -55px;
+            top: 50%; right: -50px;
             transform: translateY(-50%);
             width: 85px; height: 85px;
             z-index: 10;
@@ -153,6 +154,64 @@
         .yellow-board { background: #FFD700; }
         .red-board { background: #DC143C; }
         .board-count { font-size: 20px; }
+
+        /* ===== PENALTY SHOOTOUT OVERLAY ===== */
+        .penalty-overlay {
+            margin-top: 6px;
+            background: var(--board-bg);
+            border-radius: 6px;
+            padding: 8px 16px;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            animation: penSlideIn 0.4s ease-out forwards;
+            border: 2px solid rgba(255,255,255,0.15);
+            margin-left: 153px;  /* align under main-bar (timer-box + divider width) */
+        }
+        .penalty-overlay.visible { display: flex; }
+        @keyframes penSlideIn {
+            0% { opacity: 0; transform: translateY(-8px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .pen-side {
+            display: flex; align-items: center; gap: 4px;
+            flex: 1;
+        }
+        .pen-side.home { justify-content: center; }
+        .pen-side.away { justify-content: center; }
+        .pen-dot {
+            width: 18px; height: 18px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; font-weight: 900; color: #fff;
+            transition: all 0.3s ease;
+        }
+        .pen-dot.goal { background: #4CAF50; }
+        .pen-dot.miss { background: #f44336; }
+        .pen-dot.pending { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); color: rgba(255,255,255,0.3); }
+        .pen-score-center {
+            display: flex; align-items: center; gap: 6px;
+            font-family: 'Arial Black', 'Impact', sans-serif;
+            font-size: 22px; font-weight: 900; color: #FFD700;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+            min-width: 60px; justify-content: center;
+            flex-shrink: 0;
+        }
+        .pen-score-sep { color: rgba(255,255,255,0.4); font-size: 18px; }
+        .pen-winner {
+            width: 100%; text-align: center;
+            font-size: 13px; font-weight: 900; color: #FFD700;
+            font-family: 'Arial Black', 'Impact', sans-serif;
+            letter-spacing: 2px; text-transform: uppercase;
+            text-shadow: 0 0 15px rgba(255,215,0,0.5);
+            padding-top: 4px; display: none;
+        }
+        .pen-winner.visible { display: block; animation: winnerGlow 1s ease-out forwards; }
+        @keyframes winnerGlow {
+            0% { opacity: 0; transform: scale(0.8); }
+            50% { text-shadow: 0 0 30px rgba(255,215,0,0.8); }
+            100% { opacity: 1; transform: scale(1); }
+        }
 
         .status-indicator {
             position: absolute; bottom: 20px; left: 20px; width: 10px; height: 10px;
@@ -221,6 +280,18 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Penalty Shootout Overlay -->
+            <div class="penalty-overlay" id="penaltyOverlay">
+                <div class="pen-side home" id="penHomeDots"></div>
+                <div class="pen-score-center">
+                    <span id="penHomeScore">0</span>
+                    <span class="pen-score-sep">-</span>
+                    <span id="penAwayScore">0</span>
+                </div>
+                <div class="pen-side away" id="penAwayDots"></div>
+                <div class="pen-winner" id="penWinner"></div>
+            </div>
         </div>
     </div>
     <div class="status-indicator" id="statusIndicator"></div>
@@ -272,13 +343,24 @@
             awayYellowIndicator: document.getElementById('awayYellowIndicator'),
             awayRedIndicator: document.getElementById('awayRedIndicator'),
             homeLogoCrest: document.getElementById('homeLogoCrest'),
-            awayLogoCrest: document.getElementById('awayLogoCrest')
+            awayLogoCrest: document.getElementById('awayLogoCrest'),
+            dividerLeft: document.querySelector('.divider-left'),
+            penaltyOverlay: document.getElementById('penaltyOverlay'),
+            penHomeDots: document.getElementById('penHomeDots'),
+            penAwayDots: document.getElementById('penAwayDots'),
+            penHomeScore: document.getElementById('penHomeScore'),
+            penAwayScore: document.getElementById('penAwayScore'),
+            penWinner: document.getElementById('penWinner')
         };
 
         let previousState = { homeScore: 0, awayScore: 0 };
         let currentState = null;
         let timerInterval = null;
         let animationPlayed = false;
+        let introComplete = false;   // true after intro animation finishes (colors revealed)
+        let cachedHomeLogoUrl = null;
+        let cachedAwayLogoUrl = null;
+        let cachedPenaltyKey = '';
 
         // FIXED: robust period label mapping — handles undefined, null, empty, numeric
         const PERIOD_LABELS = {
@@ -331,16 +413,92 @@
         function checkTimerExpired(secs) {
             if (!currentState) return;
             const period = currentState.currentPeriod || '1H';
-            const halfLen = (currentState.halfLengthMinutes || 45) * 60;
-            const otLen = (currentState.otLengthMinutes || 5) * 60;
-            let periodEnd = 0;
-            if (period === '1H' || period === '2H') periodEnd = halfLen;
-            else if (period === 'OT1' || period === 'OT2') periodEnd = otLen;
-            if (currentState.timerDirection !== 'DOWN' && periodEnd > 0 && secs >= periodEnd) {
+            const half = (currentState.halfLengthMinutes || 45) * 60;
+
+            // Yellow background only during 2nd Half when clock exceeds full regulation time
+            // Clock keeps ticking — shows how deep into stoppage time the ref is
+            if (period === '2H' && currentState.timerDirection !== 'DOWN' && secs >= half * 2) {
                 elements.timerBox.classList.add('period-expired');
+                elements.dividerLeft.classList.add('period-expired');
             } else {
                 elements.timerBox.classList.remove('period-expired');
+                elements.dividerLeft.classList.remove('period-expired');
             }
+        }
+
+        function renderPenaltyOverlay(state) {
+            let homeKicks = [], awayKicks = [];
+            try { homeKicks = JSON.parse(state.homePenaltyKicks || '[]'); } catch(e) {}
+            try { awayKicks = JSON.parse(state.awayPenaltyKicks || '[]'); } catch(e) {}
+
+            const penKey = (state.homePenaltyKicks || '[]') + '|' + (state.awayPenaltyKicks || '[]');
+            const period = state.currentPeriod || '1H';
+            const hasPenalties = homeKicks.length > 0 || awayKicks.length > 0;
+
+            // Show overlay only when period is PEN
+            if (period === 'PEN') {
+                elements.penaltyOverlay.classList.add('visible');
+            } else {
+                elements.penaltyOverlay.classList.remove('visible');
+                return;
+            }
+
+            // Skip DOM rebuild if data hasn't changed
+            if (penKey === cachedPenaltyKey) return;
+            cachedPenaltyKey = penKey;
+
+            const maxRounds = Math.max(5, homeKicks.length, awayKicks.length);
+            const homeGoals = homeKicks.filter(k => k === 'goal').length;
+            const awayGoals = awayKicks.filter(k => k === 'goal').length;
+
+            elements.penHomeScore.textContent = homeGoals;
+            elements.penAwayScore.textContent = awayGoals;
+
+            // Render dots
+            elements.penHomeDots.innerHTML = buildDotHTML(homeKicks, maxRounds);
+            elements.penAwayDots.innerHTML = buildDotHTML(awayKicks, maxRounds);
+
+            // Winner check
+            const winner = checkPenaltyWinner(homeKicks, awayKicks);
+            if (winner) {
+                const name = winner === 'home'
+                    ? (state.homeTeamName || 'HOME')
+                    : (state.awayTeamName || 'AWAY');
+                elements.penWinner.textContent = `🏆 ${name} wins on penalties!`;
+                elements.penWinner.classList.add('visible');
+            } else {
+                elements.penWinner.classList.remove('visible');
+            }
+        }
+
+        function buildDotHTML(kicks, maxRounds) {
+            let html = '';
+            for (let i = 0; i < maxRounds; i++) {
+                if (i < kicks.length) {
+                    html += kicks[i] === 'goal'
+                        ? '<div class="pen-dot goal">✓</div>'
+                        : '<div class="pen-dot miss">✗</div>';
+                } else {
+                    html += `<div class="pen-dot pending">${i + 1}</div>`;
+                }
+            }
+            return html;
+        }
+
+        function checkPenaltyWinner(homeKicks, awayKicks) {
+            const hg = homeKicks.filter(k => k === 'goal').length;
+            const ag = awayKicks.filter(k => k === 'goal').length;
+            const hl = homeKicks.length, al = awayKicks.length;
+            // Standard 5 rounds
+            if (hl <= 5 && al <= 5) {
+                const homeRemaining = 5 - hl, awayRemaining = 5 - al;
+                if (hl >= 1 && al >= 1 && ag > hg + homeRemaining) return 'away';
+                if (hl >= 1 && al >= 1 && hg > ag + awayRemaining) return 'home';
+                if (hl >= 5 && al >= 5 && hg !== ag) return hg > ag ? 'home' : 'away';
+            }
+            // Sudden death
+            if (hl > 5 && al > 5 && hl === al && hg !== ag) return hg > ag ? 'home' : 'away';
+            return null;
         }
 
         function adjustTeamNameSizes() {
@@ -365,13 +523,16 @@
 
             const secs = computeCurrentTimer(state);
             elements.timer.textContent = formatTime(secs);
-            if (state.isTimerRunning) { elements.timer.classList.add('running'); startLocalTimer(); }
+            if (state.isTimerRunning) { elements.timer.classList.add('running'); if (!timerInterval) startLocalTimer(); }
             else { elements.timer.classList.remove('running'); if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } }
 
             checkTimerExpired(secs);
 
             // FIXED: period label — use robust mapping
             elements.periodLabel.textContent = getPeriodDisplay(state.currentPeriod);
+
+            // Penalty shootout overlay
+            renderPenaltyOverlay(state);
 
             elements.homeYellow.textContent = state.homeYellowCards || 0;
             elements.homeRed.textContent = state.homeRedCards || 0;
@@ -381,9 +542,18 @@
             applyJerseyColor(elements.metallicStripeHome, state.homeJerseyColor);
             applyJerseyColor(elements.metallicStripeAway, state.awayJerseyColor);
 
-            // Logos — set image source
-            renderLogoCrest(elements.homeLogoCrest, state.homeLogoUrl);
-            renderLogoCrest(elements.awayLogoCrest, state.awayLogoUrl);
+            // Apply number colors on every update — but only after intro animation is done
+            // (intro has a timed color reveal; we don't want to skip that effect)
+            if (introComplete) {
+                elements.homeTeamName.style.color = state.homeNumberColor || '#ffffff';
+                elements.awayTeamName.style.color = state.awayNumberColor || '#003366';
+                elements.homeYellowIndicator.style.color = state.homeNumberColor || '#ffffff';
+                elements.homeRedIndicator.style.color = state.homeNumberColor || '#ffffff';
+                elements.awayYellowIndicator.style.color = state.awayNumberColor || '#003366';
+                elements.awayRedIndicator.style.color = state.awayNumberColor || '#003366';
+            }
+
+            // Logos: handled separately via LogosUpdated SignalR event (not in game state broadcasts)
 
             previousState = { homeScore: state.homeScore, awayScore: state.awayScore };
 
@@ -403,6 +573,7 @@
                             elements.homeRedIndicator.style.color = state.homeNumberColor || '#ffffff';
                             elements.awayYellowIndicator.style.color = state.awayNumberColor || '#003366';
                             elements.awayRedIndicator.style.color = state.awayNumberColor || '#003366';
+                            introComplete = true;  // Now applyState will handle color updates directly
                             // Logos appear last — full opacity
                             setTimeout(() => {
                                 elements.homeLogoCrest.classList.add('visible');
@@ -412,8 +583,8 @@
                     }, 500);
                 }, 2000);
             } else {
-                if (state.homeLogoUrl) elements.homeLogoCrest.classList.add('visible');
-                if (state.awayLogoUrl) elements.awayLogoCrest.classList.add('visible');
+                if (cachedHomeLogoUrl) elements.homeLogoCrest.classList.add('visible');
+                if (cachedAwayLogoUrl) elements.awayLogoCrest.classList.add('visible');
             }
         }
 
@@ -452,6 +623,16 @@
             .build();
 
         connection.on("GameStateUpdated", updateScoreboard);
+        // Logos arrive on a separate channel — only on join/reconnect and appearance changes
+        connection.on("LogosUpdated", (homeLogoUrl, awayLogoUrl) => {
+            cachedHomeLogoUrl = homeLogoUrl;
+            cachedAwayLogoUrl = awayLogoUrl;
+            renderLogoCrest(elements.homeLogoCrest, homeLogoUrl);
+            renderLogoCrest(elements.awayLogoCrest, awayLogoUrl);
+            // Ensure visibility (may arrive before or after intro animation)
+            if (homeLogoUrl) elements.homeLogoCrest.classList.add('visible');
+            if (awayLogoUrl) elements.awayLogoCrest.classList.add('visible');
+        });
         connection.onreconnecting(() => updateConnectionStatus(false));
         connection.onreconnected(() => { updateConnectionStatus(true); if (streamKey) connection.invoke("JoinStream", streamKey); });
         connection.onclose(() => updateConnectionStatus(false));

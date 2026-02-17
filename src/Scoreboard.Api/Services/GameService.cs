@@ -8,6 +8,7 @@ namespace Scoreboard.Api.Services;
 public class GameService
 {
     private readonly ScoreboardDbContext _db;
+    private static readonly HashSet<string> ValidPeriods = new() { "1H", "2H", "OT1", "OT2", "PEN" };
 
     public GameService(ScoreboardDbContext db)
     {
@@ -15,7 +16,7 @@ public class GameService
     }
 
     /// <summary>
-    /// Get the full game state DTO for a streamer's active game
+    /// Get the full game state DTO by stream key — WITHOUT logo data.
     /// </summary>
     public async Task<GameStateDto?> GetGameStateByStreamKeyAsync(Guid streamKey)
     {
@@ -29,68 +30,67 @@ public class GameService
     }
 
     /// <summary>
-    /// Get the active game state for a streamer by their ID
+    /// Get the full game state DTO — WITHOUT logo data (fast, ~1KB result).
+    /// Used for all real-time broadcasts and state fetches.
     /// </summary>
     public async Task<GameStateDto?> GetActiveGameStateAsync(int streamerId)
     {
-        var game = await _db.Games
-            .Include(g => g.HomeTeam)
-            .Include(g => g.AwayTeam)
-            .Include(g => g.Sport)
-            .Include(g => g.TeamStats)
+        var dto = await _db.Games
+            .Where(g => g.StreamerId == streamerId
+                        && g.IsActive
+                        && g.GameStatus != "FULLTIME")
+            .Select(g => new GameStateDto
+            {
+                GameId = g.GameId,
+                GameStatus = g.GameStatus,
+
+                HomeTeamId = g.HomeTeamId,
+                HomeTeamName = g.HomeTeam != null ? g.HomeTeam.TeamName : "Home",
+                HomeTeamCode = g.HomeTeam != null ? g.HomeTeam.TeamCode : "HOME",
+                HomeJerseyColor = g.HomeTeam != null ? g.HomeTeam.JerseyColor ?? "#8B0000" : "#8B0000",
+                HomeNumberColor = g.HomeTeam != null ? g.HomeTeam.NumberColor ?? "#FFFFFF" : "#FFFFFF",
+                // HomeLogoUrl intentionally omitted — loaded via GetLogosAsync
+                HomeScore = g.TeamStats.Where(ts => ts.IsHome).Select(ts => ts.Score).FirstOrDefault(),
+                HomeYellowCards = g.TeamStats.Where(ts => ts.IsHome).Select(ts => ts.YellowCards).FirstOrDefault(),
+                HomeRedCards = g.TeamStats.Where(ts => ts.IsHome).Select(ts => ts.RedCards).FirstOrDefault(),
+
+                AwayTeamId = g.AwayTeamId,
+                AwayTeamName = g.AwayTeam != null ? g.AwayTeam.TeamName : "Opponent",
+                AwayTeamCode = g.AwayTeam != null ? g.AwayTeam.TeamCode : "OPP",
+                AwayJerseyColor = g.AwayTeam != null ? g.AwayTeam.JerseyColor ?? "#FFFFFF" : "#FFFFFF",
+                AwayNumberColor = g.AwayTeam != null ? g.AwayTeam.NumberColor ?? "#003366" : "#003366",
+                // AwayLogoUrl intentionally omitted
+                AwayScore = g.TeamStats.Where(ts => !ts.IsHome).Select(ts => ts.Score).FirstOrDefault(),
+                AwayYellowCards = g.TeamStats.Where(ts => !ts.IsHome).Select(ts => ts.YellowCards).FirstOrDefault(),
+                AwayRedCards = g.TeamStats.Where(ts => !ts.IsHome).Select(ts => ts.RedCards).FirstOrDefault(),
+
+                IsTimerRunning = g.TimerIsRunning,
+                TimerDirection = g.TimerDirection,
+                ElapsedSecondsAtPause = g.ElapsedSecondsAtPause,
+                TimerStartedAtUtc = g.TimerStartedAtUtc,
+                TimerSetSeconds = g.TimerSetSeconds,
+                ServerTimeUtc = DateTime.UtcNow,
+
+                CurrentPeriod = g.CurrentPeriod,
+                HalfLengthMinutes = g.HalfLengthMinutes,
+                OtLengthMinutes = g.OtLengthMinutes,
+                HomePenaltyKicks = g.HomePenaltyKicks,
+                AwayPenaltyKicks = g.AwayPenaltyKicks,
+                Venue = g.Venue,
+                GameDateUtc = g.GameDateUtc,
+
+                SportName = g.Sport != null ? g.Sport.SportName : "Soccer",
+                SportCode = g.Sport != null ? g.Sport.SportCode : "SOC",
+                HasCards = g.Sport != null ? g.Sport.HasCards : true,
+                HasTimer = g.Sport != null ? g.Sport.HasTimer : true,
+                DefaultPeriodLengthSeconds = g.Sport != null ? g.Sport.DefaultPeriodLengthSeconds : 2700
+            })
             .AsNoTracking()
-            .FirstOrDefaultAsync(g => g.StreamerId == streamerId
-                                      && g.IsActive
-                                      && g.GameStatus != "FULLTIME");
+            .FirstOrDefaultAsync();
 
-        if (game == null) return null;
-
-        var homeStats = game.TeamStats.FirstOrDefault(ts => ts.IsHome);
-        var awayStats = game.TeamStats.FirstOrDefault(ts => !ts.IsHome);
-
-        return new GameStateDto
-        {
-            GameId = game.GameId,
-            GameStatus = game.GameStatus,
-
-            HomeTeamId = game.HomeTeamId,
-            HomeTeamName = game.HomeTeam?.TeamName ?? "Home",
-            HomeTeamCode = game.HomeTeam?.TeamCode ?? "HOME",
-            HomeJerseyColor = game.HomeTeam?.JerseyColor ?? "#8B0000",
-            HomeNumberColor = game.HomeTeam?.NumberColor ?? "#FFFFFF",
-            HomeLogoUrl = game.HomeTeam?.LogoUrl,
-            HomeScore = homeStats?.Score ?? 0,
-            HomeYellowCards = homeStats?.YellowCards ?? 0,
-            HomeRedCards = homeStats?.RedCards ?? 0,
-
-            AwayTeamId = game.AwayTeamId,
-            AwayTeamName = game.AwayTeam?.TeamName ?? "Opponent",
-            AwayTeamCode = game.AwayTeam?.TeamCode ?? "OPP",
-            AwayJerseyColor = game.AwayTeam?.JerseyColor ?? "#FFFFFF",
-            AwayNumberColor = game.AwayTeam?.NumberColor ?? "#003366",
-            AwayLogoUrl = game.AwayTeam?.LogoUrl,
-            AwayScore = awayStats?.Score ?? 0,
-            AwayYellowCards = awayStats?.YellowCards ?? 0,
-            AwayRedCards = awayStats?.RedCards ?? 0,
-
-            IsTimerRunning = game.TimerIsRunning,
-            TimerDirection = game.TimerDirection,
-            ElapsedSecondsAtPause = game.ElapsedSecondsAtPause,
-            TimerStartedAtUtc = game.TimerStartedAtUtc,
-            TimerSetSeconds = game.TimerSetSeconds,
-            ServerTimeUtc = DateTime.UtcNow,
-
-            CurrentPeriod = game.CurrentPeriod,
-            Venue = game.Venue,
-            GameDateUtc = game.GameDateUtc,
-
-            SportName = game.Sport?.SportName ?? "Soccer",
-            SportCode = game.Sport?.SportCode ?? "SOC",
-            HasCards = game.Sport?.HasCards ?? true,
-            HasTimer = game.Sport?.HasTimer ?? true,
-            DefaultPeriodLengthSeconds = game.Sport?.DefaultPeriodLengthSeconds ?? 2700
-        };
+        return dto;
     }
+
 
     /// <summary>
     /// Create a new game for a streamer (only one active at a time)
@@ -209,6 +209,41 @@ public class GameService
             .FirstOrDefaultAsync(g => g.StreamerId == streamerId
                                       && g.IsActive
                                       && g.GameStatus != "FULLTIME");
+    }
+
+    /// <summary>
+    /// Get ONLY the logo URLs for the active game's teams.
+    /// Called once on client connect and when appearance changes — never on score/card/timer updates.
+    /// </summary>
+    public async Task<(string? HomeLogoUrl, string? AwayLogoUrl)> GetLogosAsync(int streamerId)
+    {
+        var result = await _db.Games
+            .Where(g => g.StreamerId == streamerId
+                        && g.IsActive
+                        && g.GameStatus != "FULLTIME")
+            .Select(g => new
+            {
+                HomeLogo = g.HomeTeam != null ? g.HomeTeam.LogoUrl : null,
+                AwayLogo = g.AwayTeam != null ? g.AwayTeam.LogoUrl : null
+            })
+            .AsNoTracking()
+            .FirstOrDefaultAsync();
+
+        return (result?.HomeLogo, result?.AwayLogo);
+    }
+
+    /// <summary>
+    /// Get logos by stream key (for hub/overlay use)
+    /// </summary>
+    public async Task<(string? HomeLogoUrl, string? AwayLogoUrl)> GetLogosByStreamKeyAsync(Guid streamKey)
+    {
+        var streamer = await _db.Streamers
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.StreamKey == streamKey && s.IsActive && !s.IsBlocked);
+
+        if (streamer == null) return (null, null);
+
+        return await GetLogosAsync(streamer.StreamerId);
     }
 
     // ---- Timer Operations ----
@@ -363,6 +398,25 @@ public class GameService
         await _db.SaveChangesAsync();
     }
 
+    public async Task SetPeriodAsync(int streamerId, SetPeriodRequest request)
+    {
+        var game = await GetActiveGameAsync(streamerId);
+        if (game == null) return;
+
+        var normalized = request.CurrentPeriod?.ToUpperInvariant() ?? "1H";
+        if (!ValidPeriods.Contains(normalized)) normalized = "1H";
+
+        game.CurrentPeriod = normalized;
+
+        if (request.HalfLengthMinutes.HasValue)
+            game.HalfLengthMinutes = request.HalfLengthMinutes.Value;
+        if (request.OtLengthMinutes.HasValue)
+            game.OtLengthMinutes = request.OtLengthMinutes.Value;
+
+        game.ModifiedDateUtc = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+    }
+
     public async Task ResetGameAsync(int streamerId)
     {
         var game = await GetActiveGameAsync(streamerId);
@@ -373,7 +427,9 @@ public class GameService
         game.ElapsedSecondsAtPause = 0;
         game.TimerSetSeconds = 0;
         game.GameStatus = "PREGAME";
-        game.CurrentPeriod = 1;
+        game.CurrentPeriod = "1H";
+        game.HomePenaltyKicks = "[]";
+        game.AwayPenaltyKicks = "[]";
         game.ModifiedDateUtc = DateTime.UtcNow;
 
         foreach (var stats in game.TeamStats)
@@ -384,6 +440,17 @@ public class GameService
             stats.ModifiedDateUtc = DateTime.UtcNow;
         }
 
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task ResetPenaltiesAsync(int streamerId)
+    {
+        var game = await GetActiveGameAsync(streamerId);
+        if (game == null) return;
+
+        game.HomePenaltyKicks = "[]";
+        game.AwayPenaltyKicks = "[]";
+        game.ModifiedDateUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync();
     }
 
@@ -403,4 +470,47 @@ public class GameService
 
         return streamer;
     }
+    
+    public async Task RecordPenaltyKickAsync(int streamerId, string team, string result)
+    {
+        var game = await GetActiveGameAsync(streamerId);
+        if (game == null) return;
+
+        var normalized = (result ?? "goal").ToLowerInvariant();
+        if (normalized != "goal" && normalized != "miss") normalized = "goal";
+
+        bool isHome = (team ?? "home").Equals("home", StringComparison.OrdinalIgnoreCase);
+        var json = isHome ? game.HomePenaltyKicks : game.AwayPenaltyKicks;
+        var kicks = System.Text.Json.JsonSerializer.Deserialize<List<string>>(json ?? "[]") ?? new List<string>();
+        kicks.Add(normalized);
+        var updated = System.Text.Json.JsonSerializer.Serialize(kicks);
+
+        if (isHome) game.HomePenaltyKicks = updated;
+        else game.AwayPenaltyKicks = updated;
+
+        game.ModifiedDateUtc = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task UndoPenaltyKickAsync(int streamerId, string team)
+    {
+        var game = await GetActiveGameAsync(streamerId);
+        if (game == null) return;
+
+        bool isHome = (team ?? "home").Equals("home", StringComparison.OrdinalIgnoreCase);
+        var json = isHome ? game.HomePenaltyKicks : game.AwayPenaltyKicks;
+        var kicks = System.Text.Json.JsonSerializer.Deserialize<List<string>>(json ?? "[]") ?? new List<string>();
+
+        if (kicks.Count > 0)
+        {
+            kicks.RemoveAt(kicks.Count - 1);
+            var updated = System.Text.Json.JsonSerializer.Serialize(kicks);
+            if (isHome) game.HomePenaltyKicks = updated;
+            else game.AwayPenaltyKicks = updated;
+
+            game.ModifiedDateUtc = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+        }
+    }
+
 }

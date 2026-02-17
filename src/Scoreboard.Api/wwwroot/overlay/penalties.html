@@ -211,7 +211,7 @@
             for (let i = 0; i < maxRounds; i++) {
                 if (i < kicks.length) {
                     const isNew = i >= prevCount;
-                    if (kicks[i]) {
+                    if (kicks[i] === 'goal') {
                         html += `<div class="kick-dot kick-goal ${isNew ? 'kick-new' : ''}">✓</div>`;
                     } else {
                         html += `<div class="kick-dot kick-miss ${isNew ? 'kick-new' : ''}">✗</div>`;
@@ -224,8 +224,8 @@
         }
 
         function checkWinner(homeKicks, awayKicks) {
-            const hg = homeKicks.filter(k => k).length;
-            const ag = awayKicks.filter(k => k).length;
+            const hg = homeKicks.filter(k => k === 'goal').length;
+            const ag = awayKicks.filter(k => k === 'goal').length;
             const hl = homeKicks.length;
             const al = awayKicks.length;
 
@@ -244,20 +244,24 @@
             return null;
         }
 
+        let cachedHomeLogoUrl = null;
+        let cachedAwayLogoUrl = null;
+
         function updatePenalties(state) {
             document.getElementById('homeTeamName').textContent = state.homeTeamName || 'HOME';
             document.getElementById('awayTeamName').textContent = state.awayTeamName || 'OPPONENT';
 
-            renderLogo('homeLogo', state.homeLogoUrl, state.homeJerseyColor, state.homeNumberColor, state.homeTeamCode || state.homeTeamName);
-            renderLogo('awayLogo', state.awayLogoUrl, state.awayJerseyColor, state.awayNumberColor, state.awayTeamCode || state.awayTeamName);
+            // Logos handled via separate LogosUpdated event — render fallback if no logo cached
+            renderLogo('homeLogo', cachedHomeLogoUrl, state.homeJerseyColor, state.homeNumberColor, state.homeTeamCode || state.homeTeamName);
+            renderLogo('awayLogo', cachedAwayLogoUrl, state.awayJerseyColor, state.awayNumberColor, state.awayTeamCode || state.awayTeamName);
 
-            // Parse penalty kicks from state
+            // Parse penalty kicks from state (camelCase: homePenaltyKicks / awayPenaltyKicks)
             let homeKicks = [], awayKicks = [];
-            try { homeKicks = JSON.parse(state.penaltyHomeKicks || '[]'); } catch(e) {}
-            try { awayKicks = JSON.parse(state.penaltyAwayKicks || '[]'); } catch(e) {}
+            try { homeKicks = JSON.parse(state.homePenaltyKicks || '[]'); } catch(e) {}
+            try { awayKicks = JSON.parse(state.awayPenaltyKicks || '[]'); } catch(e) {}
 
-            const homeGoals = homeKicks.filter(k => k).length;
-            const awayGoals = awayKicks.filter(k => k).length;
+            const homeGoals = homeKicks.filter(k => k === 'goal').length;
+            const awayGoals = awayKicks.filter(k => k === 'goal').length;
             const maxRounds = Math.max(5, homeKicks.length, awayKicks.length);
             const totalKicks = homeKicks.length + awayKicks.length;
             const round = Math.min(Math.floor(totalKicks / 2) + 1, maxRounds);
@@ -290,10 +294,19 @@
         // ===== SignalR =====
         const connection = new signalR.HubConnectionBuilder()
             .withUrl(`${window.location.origin}/hubs/game`)
-            .withAutomaticReconnect()
+            .withAutomaticReconnect([0, 1000, 2000, 5000, 10000, 30000])
             .build();
 
         connection.on("GameStateUpdated", updatePenalties);
+
+        // Logos arrive separately — cache them for rendering
+        connection.on("LogosUpdated", (homeLogoUrl, awayLogoUrl) => {
+            cachedHomeLogoUrl = homeLogoUrl;
+            cachedAwayLogoUrl = awayLogoUrl;
+            renderLogo('homeLogo', homeLogoUrl, null, null, null);
+            renderLogo('awayLogo', awayLogoUrl, null, null, null);
+        });
+
         connection.onreconnected(() => { if (streamKey) connection.invoke("JoinStream", streamKey); });
         connection.start().then(() => { if (streamKey) connection.invoke("JoinStream", streamKey); })
             .catch(() => setTimeout(() => location.reload(), 5000));

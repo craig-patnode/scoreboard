@@ -230,10 +230,10 @@ GO
 
 SET IDENTITY_INSERT [dbo].[Discount] ON;
 INSERT INTO [dbo].[Discount] ([DiscountId], [CouponCode], [Description], [DiscountPercent], [MaxRedemptions], [IsOneTimeUse])
-VALUES (1, 'PILOT2025', N'Pilot program - free access', 100.00, 10, 1);
+VALUES (1, 'PILOT2026', N'Pilot program - free access', 100.00, 10, 1);
 SET IDENTITY_INSERT [dbo].[Discount] OFF;
 GO
 
 PRINT '✅ Scorecard database setup complete!';
-PRINT 'Use the signup page to create pilot accounts (use coupon PILOT2025).';
+PRINT 'Use the signup page to create pilot accounts (use coupon PILOT2026).';
 GO

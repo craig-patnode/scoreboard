@@ -27,8 +27,11 @@ public class GameController : ControllerBase
     private string GetStreamKey() =>
         User.FindFirstValue("StreamKey") ?? "";
 
+
     /// <summary>
-    /// Push updated state to all overlay clients for this streamer
+    /// Push updated state to all overlay clients.
+    /// Logo data is never included — the projection query skips LogoUrl entirely,
+    /// so the DB never even reads those 200-500KB blobs on score/card/timer updates.
     /// </summary>
     private async Task BroadcastStateAsync()
     {
@@ -40,6 +43,21 @@ public class GameController : ControllerBase
             await _hubContext.Clients.Group(streamKey).SendAsync("GameStateUpdated", state);
         }
     }
+
+    /// <summary>
+    /// Push logo URLs to all clients — only called when appearance changes.
+    /// Uses a dedicated lightweight query that ONLY reads LogoUrl columns.
+    /// </summary>
+    private async Task BroadcastLogosAsync()
+    {
+        var streamerId = GetStreamerId();
+        var streamKey = GetStreamKey();
+        if (string.IsNullOrEmpty(streamKey)) return;
+
+        var (homeLogo, awayLogo) = await _gameService.GetLogosAsync(streamerId);
+        await _hubContext.Clients.Group(streamKey).SendAsync("LogosUpdated", homeLogo, awayLogo);
+    }
+
 
     // ---- State ----
 
@@ -175,7 +193,18 @@ public class GameController : ControllerBase
         await BroadcastStateAsync();
         return Ok();
     }
+    
+    // ---- Period ----
 
+    [Authorize]
+    [HttpPost("period")]
+    public async Task<IActionResult> SetPeriod([FromBody] SetPeriodRequest request)
+    {
+        await _gameService.SetPeriodAsync(GetStreamerId(), request);
+        await BroadcastStateAsync();
+        return Ok();
+    }
+    
     // ---- Cards ----
 
     [Authorize]
@@ -238,11 +267,12 @@ public class GameController : ControllerBase
 
     [Authorize]
     [HttpPost("team/home/appearance")]
-    [RequestSizeLimit(5_000_000)] // 5MB max for logo uploads
+    [RequestSizeLimit(5_000_000)]
     public async Task<IActionResult> SetHomeTeamAppearance([FromBody] UpdateTeamAppearanceRequest request)
     {
         await _gameService.UpdateTeamAppearanceAsync(GetStreamerId(), true, request);
         await BroadcastStateAsync();
+        await BroadcastLogosAsync();
         return Ok();
     }
 
@@ -253,6 +283,37 @@ public class GameController : ControllerBase
     {
         await _gameService.UpdateTeamAppearanceAsync(GetStreamerId(), false, request);
         await BroadcastStateAsync();
+        await BroadcastLogosAsync();
         return Ok();
     }
+
+    // ---- Penalties ----
+
+    [Authorize]
+    [HttpPost("penalty/record")]
+    public async Task<IActionResult> RecordPenalty([FromBody] RecordPenaltyRequest request)
+    {
+        await _gameService.RecordPenaltyKickAsync(GetStreamerId(), request.Team, request.Result);
+        await BroadcastStateAsync();
+        return Ok();
+    }
+
+    [Authorize]
+    [HttpPost("penalty/undo")]
+    public async Task<IActionResult> UndoPenalty([FromBody] UndoPenaltyRequest request)
+    {
+        await _gameService.UndoPenaltyKickAsync(GetStreamerId(), request.Team);
+        await BroadcastStateAsync();
+        return Ok();
+    }
+
+    [Authorize]
+    [HttpPost("penalty/reset")]
+    public async Task<IActionResult> ResetPenalties()
+    {
+        await _gameService.ResetPenaltiesAsync(GetStreamerId());
+        await BroadcastStateAsync();
+        return Ok();
+    }
+
 }

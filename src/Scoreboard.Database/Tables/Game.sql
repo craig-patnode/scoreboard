@@ -25,7 +25,7 @@ CREATE TABLE [dbo].[Game]
     [TimerSetSeconds]       INT             NOT NULL DEFAULT 0,
 
     -- Game State
-    [CurrentPeriod]     INT             NOT NULL    DEFAULT 1,
+    [CurrentPeriod]     VARCHAR(4)      NOT NULL    DEFAULT '1H',
     [GameStatus]        VARCHAR(20)     NOT NULL    DEFAULT 'PREGAME',
     [IsActive]          BIT             NOT NULL    DEFAULT 1,
 
@@ -43,7 +43,8 @@ CREATE TABLE [dbo].[Game]
         REFERENCES [dbo].[Team]([TeamId]),
     CONSTRAINT [CK_Game_DifferentTeams] CHECK ([HomeTeamId] <> [AwayTeamId]),
     CONSTRAINT [CK_Game_Status] CHECK ([GameStatus] IN ('PREGAME', 'LIVE', 'HALFTIME', 'FULLTIME')),
-    CONSTRAINT [CK_Game_TimerDirection] CHECK ([TimerDirection] IN ('UP', 'DOWN'))
+    CONSTRAINT [CK_Game_TimerDirection] CHECK ([TimerDirection] IN ('UP', 'DOWN')),
+    CONSTRAINT [CK_Game_CurrentPeriod] CHECK ([CurrentPeriod] IN ('1H', '2H', 'OT1', 'OT2', 'PEN'))
 );
 GO
 
