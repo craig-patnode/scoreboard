@@ -7,6 +7,9 @@ namespace Scoreboard.Api.Hubs;
 /// <summary>
 /// SignalR hub for real-time game state updates.
 /// Overlays join a group by streamKey. Controller pushes updates to the group.
+/// 
+/// PERFORMANCE: State broadcasts never include logo blobs.
+/// Logos are loaded via a dedicated lightweight query and sent on a separate channel.
 /// </summary>
 public class GameHub : Hub
 {
@@ -24,14 +27,18 @@ public class GameHub : Hub
     {
         await Groups.AddToGroupAsync(Context.ConnectionId, streamKey);
 
-        // Send current state immediately (crash recovery)
         if (Guid.TryParse(streamKey, out var key))
         {
+            // Send lightweight state (no logos — projection query skips LogoUrl)
             var state = await _gameService.GetGameStateByStreamKeyAsync(key);
             if (state != null)
             {
                 await Clients.Caller.SendAsync("GameStateUpdated", state);
             }
+
+            // Send logos separately via dedicated lightweight query
+            var (homeLogo, awayLogo) = await _gameService.GetLogosByStreamKeyAsync(key);
+            await Clients.Caller.SendAsync("LogosUpdated", homeLogo, awayLogo);
         }
     }
 
@@ -55,6 +62,9 @@ public class GameHub : Hub
             {
                 await Clients.Caller.SendAsync("GameStateUpdated", state);
             }
+
+            var (homeLogo, awayLogo) = await _gameService.GetLogosByStreamKeyAsync(key);
+            await Clients.Caller.SendAsync("LogosUpdated", homeLogo, awayLogo);
         }
     }
 }

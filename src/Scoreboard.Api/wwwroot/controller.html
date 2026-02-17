@@ -7,7 +7,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Arial', sans-serif; background: #1a1a1a; padding: 15px; color: #fff; }
+        body { font-family: 'Arial', sans-serif; background: #1a1a1a; padding: 8px; color: #fff; }
 
         .login-screen {
             max-width: 380px; margin: 80px auto; background: #2a2a2a;
@@ -26,73 +26,71 @@
         .login-error { color: #f44336; font-size: 12px; margin-top: 8px; }
 
         .container {
-            max-width: 480px; margin: 0 auto; background: #2a2a2a;
-            border-radius: 10px; padding: 20px;
+            max-width: 435px; margin: 0 auto; background: #2a2a2a;
+            border-radius: 8px; padding: 10px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.5); display: none;
         }
-        h1 { text-align: center; font-size: 20px; margin-bottom: 15px; color: #4CAF50; text-transform: uppercase; letter-spacing: 2px; }
+        h1 { text-align: center; font-size: 14px; margin-bottom: 6px; color: #4CAF50; text-transform: uppercase; letter-spacing: 2px; }
 
         .user-bar {
             display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 10px; font-size: 11px; color: #888;
+            margin-bottom: 4px; font-size: 9px; color: #888;
         }
         .user-bar .logout { cursor: pointer; color: #f44336; text-decoration: underline; }
 
         #connectionStatus {
-            text-align: center; font-size: 11px; margin-bottom: 15px; padding: 4px; border-radius: 4px; background: #333;
+            text-align: center; font-size: 9px; margin-bottom: 6px; padding: 2px; border-radius: 3px; background: #333;
         }
 
         .game-setup {
-            background: #1a1a1a; padding: 15px; border-radius: 8px; margin-bottom: 15px;
+            background: #1a1a1a; padding: 8px; border-radius: 6px; margin-bottom: 8px;
             border: 1px solid #444; text-align: center; display: none;
         }
-        .game-setup h3 { color: #4CAF50; font-size: 14px; margin-bottom: 12px; }
+        .game-setup h3 { color: #4CAF50; font-size: 11px; margin-bottom: 6px; }
         .game-setup input {
-            width: 80%; padding: 8px; margin-bottom: 8px; border: 1px solid #555;
-            background: #333; color: #fff; border-radius: 4px; font-size: 13px; text-align: center;
+            width: 80%; padding: 5px; margin-bottom: 5px; border: 1px solid #555;
+            background: #333; color: #fff; border-radius: 4px; font-size: 11px; text-align: center;
         }
-        .game-setup button { margin-top: 8px; }
+        .game-setup button { margin-top: 4px; }
 
         .scoreboard-wrapper {
-            transform: scale(0.95); transform-origin: top center;
-            width: 100%; display: flex; justify-content: center;
-            overflow: hidden; margin-bottom: 10px;
+            width: 100%; margin-bottom: 4px;
         }
         .scoreboard {
-            display: grid; grid-template-columns: 1fr auto 1fr; gap: 15px;
-            background: #1a1a1a; padding: 15px; border-radius: 8px; border: 2px solid #444; width: 285%;
+            display: grid; grid-template-columns: 1fr auto 1fr; gap: 6px;
+            background: #1a1a1a; padding: 8px; border-radius: 6px; border: 2px solid #444; width: 100%;
         }
         .team { text-align: center; }
-        .team-label { font-size: 10px; color: #888; margin-bottom: 5px; text-transform: uppercase; }
+        .team-label { font-size: 8px; color: #888; margin-bottom: 2px; text-transform: uppercase; }
         .team-name-input {
-            width: 100%; padding: 6px; font-size: 13px; border: 1px solid #555;
-            background: #333; color: #fff; border-radius: 4px; margin-bottom: 8px;
+            width: 100%; padding: 3px; font-size: 10px; border: 1px solid #555;
+            background: #333; color: #fff; border-radius: 4px; margin-bottom: 3px;
             text-align: center; font-weight: bold;
         }
         .score-display {
-            font-size: 28px; font-weight: bold; color: #ffffff; text-align: center;
-            margin: 10px 0; font-family: 'Impact', sans-serif;
+            font-size: 18px; font-weight: bold; color: #ffffff; text-align: center;
+            margin: 4px 0; font-family: 'Impact', sans-serif;
         }
-        .score-controls { display: flex; justify-content: center; gap: 5px; margin-top: 8px; }
+        .score-controls { display: flex; justify-content: center; gap: 3px; margin-top: 3px; }
 
         .timer-section {
             background: #111; border: 1px solid #444; border-radius: 6px;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            border-left: 2px solid #444; border-right: 2px solid #444; padding: 10px;
+            border-left: 2px solid #444; border-right: 2px solid #444; padding: 4px;
         }
-        .timer-display { font-size: 42px; font-weight: bold; color: #4CAF50; font-family: 'Courier New', monospace; margin-bottom: 4px; }
-        .timer-controls { display: flex; gap: 5px; margin-bottom: 6px; }
-        .timer-mode { font-size: 10px; color: #888; margin-top: 4px; padding: 5px; }
+        .timer-display { font-size: 28px; font-weight: bold; color: #4CAF50; font-family: 'Courier New', monospace; margin-bottom: 2px; }
+        .timer-controls { display: flex; gap: 3px; margin-bottom: 3px; }
+        .timer-mode { font-size: 8px; color: #888; margin-top: 2px; padding: 2px; }
 
-        .control-row { display: flex; align-items: center; gap: 5px; margin-bottom: 6px; justify-content: center; }
+        .control-row { display: flex; align-items: center; gap: 3px; margin-bottom: 3px; justify-content: center; }
 
         button {
-            padding: 6px 12px; font-size: 11px; cursor: pointer; border-radius: 4px;
+            padding: 4px 8px; font-size: 9px; cursor: pointer; border-radius: 3px;
             border: none; background: #4CAF50; color: white; font-weight: bold; transition: all 0.2s;
         }
         button:hover { opacity: 0.8; transform: translateY(-1px); }
         button:active { transform: translateY(0); }
-        .btn-sm { padding: 4px 8px; font-size: 10px; }
+        .btn-sm { padding: 2px 5px; font-size: 8px; }
         .btn-primary { background: #2196F3; }
         .btn-success { background: #4CAF50; }
         .btn-danger { background: #f44336; }
@@ -101,13 +99,13 @@
         .btn-light-warning { background: #FFB74D; }
         .btn-light-danger { background: #E57373; }
 
-        input.mini { width: 35px; padding: 4px; font-size: 11px; text-align: center; border: 1px solid #555; background: #333; color: #fff; border-radius: 3px; }
+        input.mini { width: 28px; padding: 2px; font-size: 9px; text-align: center; border: 1px solid #555; background: #333; color: #fff; border-radius: 3px; }
 
-        .panel-title { font-size: 11px; color: #4CAF50; margin-bottom: 8px; text-transform: uppercase; font-weight: bold; border-bottom: 1px solid #333; }
+        .panel-title { font-size: 9px; color: #4CAF50; margin-bottom: 4px; text-transform: uppercase; font-weight: bold; border-bottom: 1px solid #333; }
 
         .period-badge {
-            display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: 11px;
-            font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;
+            display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 9px;
+            font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px;
         }
         .period-1h { background: #2196F3; color: #fff; }
         .period-2h { background: #4CAF50; color: #fff; }
@@ -115,19 +113,19 @@
         .period-ot2 { background: #f44336; color: #fff; }
         .period-pen { background: #9C27B0; color: #fff; }
 
-        .period-buttons { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }
-        .period-buttons button { padding: 3px 8px; font-size: 9px; }
+        .period-buttons { display: flex; gap: 2px; flex-wrap: wrap; justify-content: center; margin-top: 3px; }
+        .period-buttons button { padding: 2px 5px; font-size: 8px; }
         .period-buttons button.active { box-shadow: 0 0 0 2px #FFD700; }
 
-        .half-settings { display: flex; gap: 10px; justify-content: center; align-items: center; margin-bottom: 6px; }
-        .half-settings label { font-size: 9px; color: #888; text-transform: uppercase; }
-        .half-settings input { width: 40px; padding: 3px; font-size: 11px; text-align: center; border: 1px solid #555; background: #333; color: #fff; border-radius: 3px; }
+        .half-settings { display: flex; gap: 6px; justify-content: center; align-items: center; margin-bottom: 3px; }
+        .half-settings label { font-size: 8px; color: #888; text-transform: uppercase; }
+        .half-settings input { width: 32px; padding: 2px; font-size: 9px; text-align: center; border: 1px solid #555; background: #333; color: #fff; border-radius: 3px; }
 
         /* Toast */
         .toast {
             position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            background: #f44336; color: #fff; padding: 10px 20px; border-radius: 6px;
-            font-size: 13px; font-weight: bold; z-index: 9999;
+            background: #f44336; color: #fff; padding: 6px 14px; border-radius: 5px;
+            font-size: 11px; font-weight: bold; z-index: 9999;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
             animation: toastIn 0.3s ease-out, toastOut 0.3s ease-in 2.7s forwards;
             display: none;
@@ -139,68 +137,68 @@
 
         /* ===== Penalty Section — ALWAYS VISIBLE standalone section ===== */
         .penalty-section {
-            background: #1a1a1a; padding: 12px; border-radius: 8px; margin-top: 10px;
+            background: #1a1a1a; padding: 6px; border-radius: 6px; margin-top: 4px;
             border: 2px solid #9C27B0;
         }
         .penalty-section .panel-title { color: #9C27B0; }
         .penalty-grid {
-            display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: start;
+            display: grid; grid-template-columns: 1fr auto 1fr; gap: 6px; align-items: start;
         }
         .penalty-team { text-align: center; }
-        .penalty-team-name { font-size: 12px; font-weight: bold; color: #fff; margin-bottom: 6px; }
-        .penalty-kicks { display: flex; gap: 5px; justify-content: center; margin-bottom: 8px; flex-wrap: wrap; }
+        .penalty-team-name { font-size: 9px; font-weight: bold; color: #fff; margin-bottom: 3px; }
+        .penalty-kicks { display: flex; gap: 3px; justify-content: center; margin-bottom: 4px; flex-wrap: wrap; }
         .kick-dot {
-            width: 24px; height: 24px; border-radius: 50%; border: 2px solid #555;
+            width: 18px; height: 18px; border-radius: 50%; border: 2px solid #555;
             display: flex; align-items: center; justify-content: center;
-            font-size: 11px; font-weight: bold; color: #fff;
+            font-size: 8px; font-weight: bold; color: #fff;
         }
         .kick-goal { background: #4CAF50; border-color: #4CAF50; }
         .kick-miss { background: #f44336; border-color: #f44336; }
         .kick-pending { background: #333; border-color: #555; color: #555; }
-        .penalty-score { font-size: 28px; font-weight: bold; color: #FFD700; font-family: 'Impact', sans-serif; }
-        .penalty-score-sep { font-size: 28px; color: #888; }
-        .penalty-controls { display: flex; gap: 4px; justify-content: center; }
+        .penalty-score { font-size: 16px; font-weight: bold; color: #FFD700; font-family: 'Impact', sans-serif; }
+        .penalty-score-sep { font-size: 16px; color: #888; }
+        .penalty-controls { display: flex; gap: 2px; justify-content: center; }
         .penalty-winner {
-            text-align: center; font-size: 13px; color: #FFD700; font-weight: bold;
-            margin-top: 8px; display: none;
+            text-align: center; font-size: 10px; color: #FFD700; font-weight: bold;
+            margin-top: 4px; display: none;
         }
 
         /* Appearance */
-        .appearance-inline { margin-top: 10px; border-top: 1px solid #333; padding-top: 8px; }
-        .appearance-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; justify-content: center; }
-        .appearance-row label { font-size: 9px; color: #888; text-transform: uppercase; min-width: 40px; text-align: right; }
-        .color-picker { width: 32px; height: 24px; border: 1px solid #555; border-radius: 3px; cursor: pointer; padding: 0; background: none; }
-        .logo-preview { width: 36px; height: 36px; border-radius: 4px; border: 1px solid #555; background: #333; object-fit: contain; }
+        .appearance-inline { margin-top: 4px; border-top: 1px solid #333; padding-top: 4px; }
+        .appearance-row { display: flex; align-items: center; gap: 4px; margin-bottom: 3px; justify-content: center; }
+        .appearance-row label { font-size: 8px; color: #888; text-transform: uppercase; min-width: 32px; text-align: right; }
+        .color-picker { width: 24px; height: 18px; border: 1px solid #555; border-radius: 3px; cursor: pointer; padding: 0; background: none; }
+        .logo-preview { width: 26px; height: 26px; border-radius: 3px; border: 1px solid #555; background: #333; object-fit: contain; }
         .logo-placeholder {
-            width: 36px; height: 36px; border-radius: 4px; border: 1px dashed #555;
+            width: 26px; height: 26px; border-radius: 3px; border: 1px dashed #555;
             background: #333; display: inline-flex; align-items: center; justify-content: center;
-            font-size: 14px; color: #555;
+            font-size: 10px; color: #555;
         }
-        .file-input-label { display: inline-block; padding: 2px 6px; font-size: 9px; background: #555; color: #fff; border-radius: 3px; cursor: pointer; }
+        .file-input-label { display: inline-block; padding: 1px 4px; font-size: 7px; background: #555; color: #fff; border-radius: 3px; cursor: pointer; }
         .file-input-label:hover { background: #666; }
         input[type="file"] { display: none; }
 
         .state-compact {
-            background: #1a1a1a; padding: 8px; border-radius: 6px;
-            font-size: 10px; line-height: 1.6; border: 1px solid #444; color: #aaa;
+            background: #1a1a1a; padding: 5px; border-radius: 5px;
+            font-size: 8px; line-height: 1.4; border: 1px solid #444; color: #aaa;
         }
         .state-compact strong { color: #4CAF50; }
 
         .obs-urls {
-            background: #1a1a1a; padding: 10px; border-radius: 6px; margin-top: 10px;
-            border: 1px solid #444; font-size: 10px;
+            background: #1a1a1a; padding: 5px; border-radius: 5px; margin-top: 4px;
+            border: 1px solid #444; font-size: 8px;
         }
-        .obs-urls .panel-title { margin-bottom: 6px; }
-        .obs-url-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; gap: 6px; }
+        .obs-urls .panel-title { margin-bottom: 3px; }
+        .obs-url-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; gap: 3px; }
         .obs-url-row span { color: #aaa; white-space: nowrap; }
-        .obs-url-row code { color: #4CAF50; font-size: 9px; word-break: break-all; flex: 1; }
-        .copy-btn { padding: 2px 6px; font-size: 9px; background: #555; white-space: nowrap; }
+        .obs-url-row code { color: #4CAF50; font-size: 7px; word-break: break-all; flex: 1; }
+        .copy-btn { padding: 2px 4px; font-size: 7px; background: #555; white-space: nowrap; }
 
-        .theme-selector { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; justify-content: center; }
-        .theme-selector label { font-size: 10px; color: #888; text-transform: uppercase; }
-        .theme-selector select { padding: 4px 8px; font-size: 11px; border: 1px solid #555; background: #333; color: #fff; border-radius: 4px; }
+        .theme-selector { display: flex; align-items: center; gap: 5px; margin-bottom: 4px; justify-content: center; }
+        .theme-selector label { font-size: 8px; color: #888; text-transform: uppercase; }
+        .theme-selector select { padding: 2px 5px; font-size: 9px; border: 1px solid #555; background: #333; color: #fff; border-radius: 3px; }
 
-        .reset-row { text-align: center; margin-top: 6px; margin-bottom: 10px; }
+        .reset-row { text-align: center; margin-top: 3px; margin-bottom: 4px; }
     </style>
 </head>
 <body>
@@ -422,10 +420,15 @@
         let currentPeriod = '1H';
         let halfLengthMinutes = parseInt(localStorage.getItem('sc_halfLength')) || 45;
         let otLengthMinutes = parseInt(localStorage.getItem('sc_otLength')) || 5;
-        let periodAutoStopped = false;
+        let halftimeAutoStopped = false;
 
         let penaltyHomeKicks = [];
         let penaltyAwayKicks = [];
+
+        // ===== Performance: cache heavy DOM updates =====
+        let cachedHomeLogoUrl = null;
+        let cachedAwayLogoUrl = null;
+        let cachedPenaltyKey = '';
 
         function showToast(msg, type = 'error') {
             const toast = document.getElementById('toast');
@@ -518,9 +521,10 @@
                     if (state.currentPeriod) currentPeriod = state.currentPeriod;
                     if (state.halfLengthMinutes) { halfLengthMinutes = state.halfLengthMinutes; document.getElementById('halfLengthInput').value = halfLengthMinutes; }
                     if (state.otLengthMinutes) { otLengthMinutes = state.otLengthMinutes; document.getElementById('otLengthInput').value = otLengthMinutes; }
-                    if (state.penaltyHomeKicks) { try { penaltyHomeKicks = JSON.parse(state.penaltyHomeKicks); } catch(e) { penaltyHomeKicks = []; } }
-                    if (state.penaltyAwayKicks) { try { penaltyAwayKicks = JSON.parse(state.penaltyAwayKicks); } catch(e) { penaltyAwayKicks = []; } }
+                    if (state.homePenaltyKicks) { try { penaltyHomeKicks = JSON.parse(state.homePenaltyKicks); } catch(e) { penaltyHomeKicks = []; } }
+                    if (state.awayPenaltyKicks) { try { penaltyAwayKicks = JSON.parse(state.awayPenaltyKicks); } catch(e) { penaltyAwayKicks = []; } }
                     showActiveGame(state);
+                    // Logos arrive via SignalR LogosUpdated event after JoinStream
                 } else { showGameSetup(); }
             } catch { showGameSetup(); }
         }
@@ -536,7 +540,7 @@
                 method: 'POST', headers: { ...authHeaders(), 'Content-Type': 'application/json' },
                 body: JSON.stringify({ homeTeamName: homeName, awayTeamName: awayName, venue })
             });
-            currentPeriod = '1H'; penaltyHomeKicks = []; penaltyAwayKicks = []; periodAutoStopped = false;
+            currentPeriod = '1H'; penaltyHomeKicks = []; penaltyAwayKicks = []; halftimeAutoStopped = false;
             await loadGameState();
             saveHalfSettings();
         }
@@ -550,9 +554,16 @@
             connection.on("GameStateUpdated", (state) => {
                 lastState = state;
                 if (state.currentPeriod) currentPeriod = state.currentPeriod;
-                if (state.penaltyHomeKicks) { try { penaltyHomeKicks = JSON.parse(state.penaltyHomeKicks); } catch(e) {} }
-                if (state.penaltyAwayKicks) { try { penaltyAwayKicks = JSON.parse(state.penaltyAwayKicks); } catch(e) {} }
+                if (state.homePenaltyKicks) { try { penaltyHomeKicks = JSON.parse(state.homePenaltyKicks); } catch(e) {} }
+                if (state.awayPenaltyKicks) { try { penaltyAwayKicks = JSON.parse(state.awayPenaltyKicks); } catch(e) {} }
                 applyState(state);
+            });
+            // Logos arrive on a separate channel — only on join/reconnect and appearance changes
+            connection.on("LogosUpdated", (homeLogoUrl, awayLogoUrl) => {
+                cachedHomeLogoUrl = homeLogoUrl;
+                cachedAwayLogoUrl = awayLogoUrl;
+                setLogoPreview('home', homeLogoUrl);
+                setLogoPreview('away', awayLogoUrl);
             });
             connection.onreconnecting(() => setConnectionStatus(false));
             connection.onreconnected(() => { setConnectionStatus(true); if (streamKey) connection.invoke("JoinStream", streamKey); });
@@ -566,7 +577,7 @@
             el.style.color = connected ? '#4CAF50' : '#f44336';
         }
 
-        // ===== PLAY — countdown-at-zero guard =====
+        // ===== PLAY — auto-advance to 2H at halftime =====
         async function handlePlay() {
             if (lastState) {
                 const secs = computeTimer(lastState);
@@ -574,9 +585,15 @@
                     showToast('⚠️ Timer is at 0:00 in countdown mode. Reset or set a new time before starting.', 'warning');
                     return;
                 }
+                // At halftime: auto-advance to 2nd Half, then resume
+                if (currentPeriod === '1H' && secs >= halfLengthMinutes * 60) {
+                    currentPeriod = '2H';
+                    halftimeAutoStopped = false;
+                    updatePeriodUI();
+                    await apiPost('period', { currentPeriod: '2H', halfLengthMinutes, otLengthMinutes });
+                }
             }
             await apiPost('timer/start');
-            periodAutoStopped = false;
         }
 
         // ===== PERIOD MANAGEMENT =====
@@ -590,17 +607,12 @@
 
         async function setPeriod(period) {
             currentPeriod = period;
-            periodAutoStopped = false;
+            halftimeAutoStopped = false;
             updatePeriodUI();
             await apiPost('period', { currentPeriod: period, halfLengthMinutes, otLengthMinutes });
-            await apiPost('timer/reset');
-        }
-
-        function getPeriodEndSeconds() {
-            switch (currentPeriod) {
-                case '1H': case '2H': return halfLengthMinutes * 60;
-                case 'OT1': case 'OT2': return otLengthMinutes * 60;
-                default: return 0;
+            // PEN: auto-stop the clock (like hitting pause)
+            if (period === 'PEN') {
+                await apiPost('timer/stop');
             }
         }
 
@@ -630,20 +642,6 @@
             // NOTE: penalty section is ALWAYS visible now — no show/hide toggle
         }
 
-        function checkPeriodEnd() {
-            if (!lastState || !lastState.isTimerRunning || periodAutoStopped) return;
-            if (lastState.timerDirection === 'DOWN') return;
-            const secs = computeTimer(lastState);
-            const periodEnd = getPeriodEndSeconds();
-            if (periodEnd > 0 && secs >= periodEnd) {
-                periodAutoStopped = true;
-                apiPost('timer/stop');
-                const next = getNextPeriod(currentPeriod);
-                if (next) showToast(`⏱️ ${getPeriodLabel(currentPeriod)} complete! Press "${getPeriodLabel(next)}" when ready.`, 'warning');
-                else showToast(`⏱️ ${getPeriodLabel(currentPeriod)} complete!`, 'warning');
-            }
-        }
-
         // ---- Timer ----
         function computeTimer(state) {
             if (!state) return 0;
@@ -660,29 +658,37 @@
             if (localTimerInterval) clearInterval(localTimerInterval);
             localTimerInterval = setInterval(() => {
                 if (lastState?.isTimerRunning) {
-                    document.getElementById('timerDisplay').textContent = formatTime(computeTimer(lastState));
-                    checkPeriodEnd();
+                    const secs = computeTimer(lastState);
+                    document.getElementById('timerDisplay').textContent = formatTime(secs);
+                    // Auto-stop at halftime only (1H → halfLength minutes)
+                    if (currentPeriod === '1H' && !halftimeAutoStopped && secs >= halfLengthMinutes * 60) {
+                        halftimeAutoStopped = true;
+                        apiPost('timer/stop');
+                        showToast('⏱️ Halftime!', 'warning');
+                    }
                 }
             }, 200);
         }
 
         // ===== PENALTIES =====
         async function recordPenalty(team, isGoal) {
-            if (team === 'home') penaltyHomeKicks.push(isGoal);
-            else penaltyAwayKicks.push(isGoal);
+            const result = isGoal ? 'goal' : 'miss';
+            if (team === 'home') penaltyHomeKicks.push(result);
+            else penaltyAwayKicks.push(result);
             renderPenalties();
-            await apiPost('penalty/kick', {
-                team, result: isGoal,
-                penaltyHomeKicks: JSON.stringify(penaltyHomeKicks),
-                penaltyAwayKicks: JSON.stringify(penaltyAwayKicks)
-            });
+            await apiPost('penalty/record', { team, result });
         }
 
         function undoLastPenalty() {
-            if (penaltyAwayKicks.length > penaltyHomeKicks.length) penaltyAwayKicks.pop();
-            else if (penaltyHomeKicks.length > 0) penaltyHomeKicks.pop();
+            // Undo the most recent kick (away goes last in alternating order)
+            if (penaltyAwayKicks.length > penaltyHomeKicks.length) {
+                penaltyAwayKicks.pop();
+                apiPost('penalty/undo', { team: 'away' });
+            } else if (penaltyHomeKicks.length > 0) {
+                penaltyHomeKicks.pop();
+                apiPost('penalty/undo', { team: 'home' });
+            }
             renderPenalties();
-            apiPost('penalty/kick', { team: 'undo', penaltyHomeKicks: JSON.stringify(penaltyHomeKicks), penaltyAwayKicks: JSON.stringify(penaltyAwayKicks) });
         }
 
         function resetPenalties() {
@@ -693,8 +699,13 @@
         }
 
         function renderPenalties() {
-            const homeGoals = penaltyHomeKicks.filter(k => k).length;
-            const awayGoals = penaltyAwayKicks.filter(k => k).length;
+            // Skip full DOM rebuild if nothing changed
+            const penKey = JSON.stringify(penaltyHomeKicks) + '|' + JSON.stringify(penaltyAwayKicks);
+            if (penKey === cachedPenaltyKey) return;
+            cachedPenaltyKey = penKey;
+
+            const homeGoals = penaltyHomeKicks.filter(k => k === 'goal').length;
+            const awayGoals = penaltyAwayKicks.filter(k => k === 'goal').length;
             const maxRounds = Math.max(5, penaltyHomeKicks.length, penaltyAwayKicks.length);
             const totalKicks = penaltyHomeKicks.length + penaltyAwayKicks.length;
             const round = Math.floor(totalKicks / 2) + 1;
@@ -719,7 +730,7 @@
             let html = '';
             for (let i = 0; i < maxRounds; i++) {
                 if (i < kicks.length) {
-                    html += kicks[i] ? `<div class="kick-dot kick-goal">✓</div>` : `<div class="kick-dot kick-miss">✗</div>`;
+                    html += kicks[i] === 'goal' ? `<div class="kick-dot kick-goal">✓</div>` : `<div class="kick-dot kick-miss">✗</div>`;
                 } else {
                     html += `<div class="kick-dot kick-pending">${i + 1}</div>`;
                 }
@@ -729,7 +740,7 @@
 
         function checkPenaltyWinner() {
             const hk = penaltyHomeKicks, ak = penaltyAwayKicks;
-            const hg = hk.filter(k => k).length, ag = ak.filter(k => k).length;
+            const hg = hk.filter(k => k === 'goal').length, ag = ak.filter(k => k === 'goal').length;
             const hl = hk.length, al = ak.length;
             if (hl <= 5 && al <= 5) {
                 const homeRemaining = 5 - hl, awayRemaining = 5 - al;
@@ -756,14 +767,13 @@
             const secs = computeTimer(state);
             document.getElementById('timerDisplay').textContent = formatTime(secs);
             document.getElementById('timerMode').textContent = state.timerDirection === 'DOWN' ? 'Counting Down' : 'Counting Up';
-            if (state.isTimerRunning) startLocalTimer();
+            if (state.isTimerRunning) { if (!localTimerInterval) startLocalTimer(); }
             else if (localTimerInterval) { clearInterval(localTimerInterval); localTimerInterval = null; }
             setColorIfNotActive('homeJerseyColor', state.homeJerseyColor || '#8B0000');
             setColorIfNotActive('homeNumberColor', state.homeNumberColor || '#FFFFFF');
             setColorIfNotActive('awayJerseyColor', state.awayJerseyColor || '#FFFFFF');
             setColorIfNotActive('awayNumberColor', state.awayNumberColor || '#003366');
-            setLogoPreview('home', state.homeLogoUrl);
-            setLogoPreview('away', state.awayLogoUrl);
+            // Logos: handled separately via LogosUpdated SignalR event (not in game state broadcasts)
             updatePeriodUI();
             renderPenalties();
             document.getElementById('stateBox').innerHTML = `

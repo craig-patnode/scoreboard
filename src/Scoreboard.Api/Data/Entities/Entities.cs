@@ -122,11 +122,16 @@ public class Game
     public int TimerSetSeconds { get; set; }
 
     // Game state
-    public int CurrentPeriod { get; set; } = 1;
+    public string CurrentPeriod { get; set; } = "1H";
     public string GameStatus { get; set; } = "PREGAME";
+    public int HalfLengthMinutes { get; set; } = 45;
+    public int OtLengthMinutes { get; set; } = 5;
     public bool IsActive { get; set; } = true;
     public DateTime CreatedDateUtc { get; set; } = DateTime.UtcNow;
     public DateTime ModifiedDateUtc { get; set; } = DateTime.UtcNow;
+    public string HomePenaltyKicks { get; set; } = "[]";
+    public string AwayPenaltyKicks { get; set; } = "[]";
+
 
     // Navigation
     public Streamer? Streamer { get; set; }

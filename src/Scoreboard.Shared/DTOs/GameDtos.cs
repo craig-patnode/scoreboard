@@ -37,6 +37,11 @@ public class GameStateDto
     // Timer - client computes current time from these fields
     public bool IsTimerRunning { get; set; }
     public string TimerDirection { get; set; } = "UP";
+    public int HalfLengthMinutes { get; set; } = 45;
+    public int OtLengthMinutes { get; set; } = 5;
+    public string HomePenaltyKicks { get; set; } = "[]";
+    public string AwayPenaltyKicks { get; set; } = "[]";
+
     public int ElapsedSecondsAtPause { get; set; }
     public DateTime? TimerStartedAtUtc { get; set; }
     public int TimerSetSeconds { get; set; }
@@ -64,7 +69,7 @@ public class GameStateDto
     }
 
     // Game info
-    public int CurrentPeriod { get; set; } = 1;
+    public string CurrentPeriod { get; set; } = "1H";
     public string? Venue { get; set; }
     public DateTime GameDateUtc { get; set; }
 
@@ -98,6 +103,16 @@ public class UpdateCardsRequest
 public class SetTimerRequest
 {
     public int Seconds { get; set; }
+}
+
+/// <summary>
+/// Request to set the current period and half/OT settings
+/// </summary>
+public class SetPeriodRequest
+{
+    public string CurrentPeriod { get; set; } = "1H";
+    public int? HalfLengthMinutes { get; set; }
+    public int? OtLengthMinutes { get; set; }
 }
 
 /// <summary>
@@ -171,3 +186,20 @@ public class CreateGameRequest
     public string? AwayTeamName { get; set; }
     public string? Venue { get; set; }
 }
+
+public class RecordPenaltyRequest
+{
+    /// <summary>"home" or "away"</summary>
+    public string Team { get; set; } = "home";
+
+    /// <summary>"goal" or "miss"</summary>
+    public string Result { get; set; } = "goal";
+}
+
+public class UndoPenaltyRequest
+{
+    /// <summary>"home" or "away"</summary>
+    public string Team { get; set; } = "home";
+}
+
+
