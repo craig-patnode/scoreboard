@@ -34,7 +34,19 @@ public class AuthController : ControllerBase
     [HttpGet("validate-coupon/{code}")]
     public async Task<IActionResult> ValidateCoupon(string code)
     {
-        var result = await _authService.ValidateCouponAsync(code);
-        return Ok(result);
+        try
+        {
+            var result = await _authService.ValidateCouponAsync(code);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new {
+                Error = "An error occurred while validating the coupon.",
+                Message = "Please contact customer support if the error persists.",
+                Details = ex.Message,
+                InnerException = ex.InnerException?.Message
+            });
+        }
     }
 }

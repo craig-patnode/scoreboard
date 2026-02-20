@@ -13,6 +13,19 @@
 - For Azure deployment: Use federated credentials (managed identity) over publish profiles
 - For authentication: Use modern OAuth/OIDC flows where applicable
 
+### Security & Secrets - CRITICAL RULES
+- **NEVER commit passwords, secrets, or credentials to git** - This is non-negotiable
+- **NEVER create scripts with hardcoded passwords** - Use environment variables or Azure Key Vault
+- Before any git commit, verify:
+  - No `.sh`, `.ps1`, or config files contain passwords or secrets
+  - Check `git status` for any debug/test scripts that may contain credentials
+  - Remove all log files, Azure logs, and debug artifacts
+- Update `.gitignore` immediately if new types of sensitive files are created
+- Secrets should only exist in:
+  - Azure App Service Configuration (connection strings, app settings)
+  - Azure Key Vault
+  - Local environment variables (never committed)
+
 ### Git Workflow & Pull Requests
 - **I handle all git operations** - commits, pushes, and PR creation
 - **Branch naming convention**: Always create branches under `users/craigp/<title_summary_of_pr>`
@@ -28,6 +41,12 @@
   - **User reviews and approves** - I wait for explicit approval before merging
   - Use GitHub CLI (`gh pr create`) for PR creation
 - **Never push directly to main** - always use Pull Request workflow
+- **Files that should NEVER be committed**:
+  - Log files (*.log, azure-logs/, azure-logs*.zip)
+  - Debug/test scripts (test-*.sh, debug-*.sh, especially those with passwords)
+  - Temporary files and build artifacts
+  - Any file containing passwords, connection strings, or secrets
+  - Check `git status` before every commit and verify only source code changes are included
 
 ### Azure Resources
 - App Service: `scoreboard-app`
