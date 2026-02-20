@@ -2,6 +2,8 @@
 
 Professional scoreboard overlays for OBS Studio live streams. Built for youth sports streamers.
 
+<!-- Deployment trigger: 2026-02-20 -->
+
 ## Architecture
 
 ```
