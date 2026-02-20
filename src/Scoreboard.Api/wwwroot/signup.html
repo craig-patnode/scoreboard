@@ -201,18 +201,26 @@
             selectedPlan = plan;
         }
 
-        function validateCoupon() {
+        async function validateCoupon() {
             const code = document.getElementById('couponCode').value.trim();
             const status = document.getElementById('couponStatus');
             if (!code) { status.textContent = ''; return; }
 
-            // Stubbed validation - accept PILOT2025
-            if (code.toUpperCase() === 'PILOT2025') {
-                status.textContent = '✅ Coupon applied! 100% off.';
-                status.className = 'coupon-status valid';
-                couponValid = true;
-            } else {
-                status.textContent = '❌ Invalid coupon code.';
+            try {
+                const response = await fetch(`${API_BASE}/auth/validate-coupon/${encodeURIComponent(code)}`);
+                const result = await response.json();
+
+                if (result.isValid) {
+                    status.textContent = `✅ ${result.message}`;
+                    status.className = 'coupon-status valid';
+                    couponValid = true;
+                } else {
+                    status.textContent = `❌ ${result.message}`;
+                    status.className = 'coupon-status invalid';
+                    couponValid = false;
+                }
+            } catch (error) {
+                status.textContent = '❌ Error validating coupon.';
                 status.className = 'coupon-status invalid';
                 couponValid = false;
             }
