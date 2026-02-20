@@ -22,9 +22,26 @@ public class AuthService
 
     public async Task<AuthResponse> SignUpAsync(SignUpRequest request)
     {
-        // Check if email already exists
-        if (await _db.Streamers.AnyAsync(s => s.EmailAddress == request.EmailAddress))
+        // Check if email already exists - if so, attempt login for idempotency
+        var existing = await _db.Streamers
+            .FirstOrDefaultAsync(s => s.EmailAddress == request.EmailAddress);
+        if (existing != null)
+        {
+            // If the password matches, treat as a successful retry (idempotent)
+            if (BCrypt.Net.BCrypt.Verify(request.Password, existing.PasswordHash))
+            {
+                var existingToken = GenerateJwtToken(existing);
+                return new AuthResponse
+                {
+                    Success = true,
+                    Token = existingToken,
+                    StreamerId = existing.StreamerId,
+                    StreamKey = existing.StreamKey.ToString(),
+                    DisplayName = existing.DisplayName
+                };
+            }
             return new AuthResponse { Success = false, Message = "Email already registered." };
+        }
 
         var plan = await _db.SubscriptionPlans
             .FirstOrDefaultAsync(p => p.PlanCode == request.PlanCode && p.IsActive);

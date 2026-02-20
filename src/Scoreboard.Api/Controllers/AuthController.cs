@@ -18,9 +18,20 @@ public class AuthController : ControllerBase
     [HttpPost("signup")]
     public async Task<IActionResult> SignUp([FromBody] SignUpRequest request)
     {
-        var result = await _authService.SignUpAsync(request);
-        if (!result.Success) return BadRequest(result);
-        return Ok(result);
+        try
+        {
+            var result = await _authService.SignUpAsync(request);
+            if (!result.Success) return BadRequest(result);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new AuthResponse
+            {
+                Success = false,
+                Message = "An error occurred during signup. Please try again or contact support if the issue persists."
+            });
+        }
     }
 
     [HttpPost("login")]
