@@ -54,8 +54,22 @@
 - Before committing CLAUDE.md changes, ask user to approve the proposed additions
 - Review Lessons Learned before writing new code to avoid repeating past mistakes
 
+### Database Schema Validation
+- **Before deploying code that touches entities/models**, compare local DB schema against Azure SQL to catch discrepancies
+- **When changing DB schema (entities, columns, types)**, also update the SQL source files in `src/Scoreboard.Database/`:
+  - Individual table files: `Tables/*.sql`
+  - Full setup script: `Setup.sql`
+  - Seed data: `SeedData/SeedData.sql`
+- All three sources of truth must stay in sync: **entity classes** ↔ **SQL source files** ↔ **actual databases** (local + Azure)
+- **Always update seed data** (`SeedData/SeedData.sql` and the seed section in `Setup.sql`) when any DB schema change or discrepancy is found — column renames, type changes, new columns, etc.
+- Local SQL Server: `localhost\SQLExpress`, Database: `ScoreboardDB`
+- Azure SQL Server: `scoreboard-asql.database.windows.net`, Database: `ScoreboardDb`
+- Use `sqlcmd` to query `INFORMATION_SCHEMA.COLUMNS` on both and compare column names, data types, nullability, and max lengths
+- Schema differences between local dev and Azure production are a top cause of 500 errors that pass local testing
+
 ### Azure Resources
 - App Service: `scoreboard-app`
+- SQL Server: `scoreboard-asql` / Database: `ScoreboardDb`
 - Resources are manually deployed to Azure
 - Primary workflow: `.github/workflows/main_scoreboard-app.yml`
 
@@ -80,6 +94,9 @@ Captures root cause analysis from bugs to prevent recurrence.
 - Never expose raw exception details to end users in production
 
 ### Database & Entity Framework
+- **Schema drift between local and Azure SQL is a top cause of production 500 errors** — always compare schemas before deploying entity model changes (column renames, new columns, type changes)
+- **Three sources of truth must stay in sync**: C# entity classes, SQL source files (`src/Scoreboard.Database/`), and actual databases — when one changes, update all three
+- Column renames in entities (e.g., `ShortName` → `TeamCode`) require manual `ALTER TABLE` / `sp_rename` in Azure SQL since EF migrations are not configured
 - Hardcoding foreign key IDs (e.g., `SportId = 1`) causes FK constraint violations if the referenced table is empty — always look up or auto-create referenced records dynamically
 - New user flows that create records across multiple tables (Teams, Games, GameTeamStats) need all FK dependencies satisfied before `SaveChangesAsync()` — trace the full entity chain during code review
 

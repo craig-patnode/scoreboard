@@ -26,6 +26,10 @@ CREATE TABLE [dbo].[Game]
 
     -- Game State
     [CurrentPeriod]     VARCHAR(4)      NOT NULL    DEFAULT '1H',
+    [HalfLengthMinutes] INT             NOT NULL    DEFAULT 45,
+    [OtLengthMinutes]   INT             NOT NULL    DEFAULT 5,
+    [HomePenaltyKicks]  NVARCHAR(200)   NOT NULL    DEFAULT '[]',
+    [AwayPenaltyKicks]  NVARCHAR(200)   NOT NULL    DEFAULT '[]',
     [GameStatus]        VARCHAR(20)     NOT NULL    DEFAULT 'PREGAME',
     [IsActive]          BIT             NOT NULL    DEFAULT 1,
 
