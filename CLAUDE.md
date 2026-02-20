@@ -79,6 +79,14 @@ Captures root cause analysis from bugs to prevent recurrence.
 - All API endpoints should have try-catch error handling returning user-friendly messages
 - Never expose raw exception details to end users in production
 
+### Database & Entity Framework
+- Hardcoding foreign key IDs (e.g., `SportId = 1`) causes FK constraint violations if the referenced table is empty — always look up or auto-create referenced records dynamically
+- New user flows that create records across multiple tables (Teams, Games, GameTeamStats) need all FK dependencies satisfied before `SaveChangesAsync()` — trace the full entity chain during code review
+
+### Error Handling
+- A global exception handler middleware (`app.UseExceptionHandler`) covers all endpoints consistently instead of requiring per-endpoint try-catch — add it early in the pipeline
+- Critical endpoints like game creation should still have specific try-catch for better contextual error messages
+
 ### Code Practices
 - Never hardcode validation values in frontend JavaScript - always call backend API
 - Static files in wwwroot are only deployed when the correct project is published
