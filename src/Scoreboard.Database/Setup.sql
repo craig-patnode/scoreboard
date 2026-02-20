@@ -127,10 +127,10 @@ CREATE TABLE [dbo].[Team]
     [TeamId]            INT             NOT NULL    IDENTITY(1,1),
     [StreamerId]        INT             NOT NULL,
     [TeamName]          NVARCHAR(100)   NOT NULL,
-    [ShortName]         NVARCHAR(20)    NULL,
+    [TeamCode]          NVARCHAR(20)    NOT NULL,
     [JerseyColor]       VARCHAR(7)      NULL,
     [NumberColor]       VARCHAR(7)      NULL,
-    [LogoUrl]           NVARCHAR(500)   NULL,
+    [LogoUrl]           NVARCHAR(MAX)   NULL,
     [SportId]           INT             NOT NULL,
     [IsDefault]         BIT             NOT NULL    DEFAULT 0,
     [IsActive]          BIT             NOT NULL    DEFAULT 1,
@@ -142,6 +142,9 @@ CREATE TABLE [dbo].[Team]
     CONSTRAINT [FK_Team_Sport] FOREIGN KEY ([SportId])
         REFERENCES [dbo].[Sport]([SportId])
 );
+GO
+
+CREATE UNIQUE INDEX [IX_Team_StreamerId_TeamCode] ON [dbo].[Team] ([StreamerId], [TeamCode]);
 GO
 
 -- ============================================
@@ -161,7 +164,13 @@ CREATE TABLE [dbo].[Game]
     [TimerIsRunning]        BIT             NOT NULL DEFAULT 0,
     [TimerDirection]        VARCHAR(4)      NOT NULL DEFAULT 'UP',
     [TimerSetSeconds]       INT             NOT NULL DEFAULT 0,
-    [CurrentPeriod]     INT             NOT NULL    DEFAULT 1,
+
+    -- Game State
+    [CurrentPeriod]     VARCHAR(4)      NOT NULL    DEFAULT '1H',
+    [HalfLengthMinutes] INT             NOT NULL    DEFAULT 45,
+    [OtLengthMinutes]   INT             NOT NULL    DEFAULT 5,
+    [HomePenaltyKicks]  NVARCHAR(200)   NOT NULL    DEFAULT '[]',
+    [AwayPenaltyKicks]  NVARCHAR(200)   NOT NULL    DEFAULT '[]',
     [GameStatus]        VARCHAR(20)     NOT NULL    DEFAULT 'PREGAME',
     [IsActive]          BIT             NOT NULL    DEFAULT 1,
     [CreatedDateUtc]    DATETIME2(7)    NOT NULL    DEFAULT SYSUTCDATETIME(),
@@ -177,7 +186,8 @@ CREATE TABLE [dbo].[Game]
         REFERENCES [dbo].[Team]([TeamId]),
     CONSTRAINT [CK_Game_DifferentTeams] CHECK ([HomeTeamId] <> [AwayTeamId]),
     CONSTRAINT [CK_Game_Status] CHECK ([GameStatus] IN ('PREGAME', 'LIVE', 'HALFTIME', 'FULLTIME')),
-    CONSTRAINT [CK_Game_TimerDirection] CHECK ([TimerDirection] IN ('UP', 'DOWN'))
+    CONSTRAINT [CK_Game_TimerDirection] CHECK ([TimerDirection] IN ('UP', 'DOWN')),
+    CONSTRAINT [CK_Game_CurrentPeriod] CHECK ([CurrentPeriod] IN ('1H', '2H', 'OT1', 'OT2', 'PEN'))
 );
 GO
 

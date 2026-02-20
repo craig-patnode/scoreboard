@@ -3,10 +3,10 @@ CREATE TABLE [dbo].[Team]
     [TeamId]            INT             NOT NULL    IDENTITY(1,1),
     [StreamerId]        INT             NOT NULL,
     [TeamName]          NVARCHAR(100)   NOT NULL,
-    [ShortName]         NVARCHAR(20)    NULL,
+    [TeamCode]          NVARCHAR(20)    NOT NULL,
     [JerseyColor]       VARCHAR(7)      NULL,       -- Hex color e.g., '#8B0000'
     [NumberColor]       VARCHAR(7)      NULL,       -- Hex color for jersey numbers
-    [LogoUrl]           NVARCHAR(500)   NULL,       -- URL to team crest/logo thumbnail
+    [LogoUrl]           NVARCHAR(MAX)   NULL,       -- URL to team crest/logo (base64 data URI)
     [SportId]           INT             NOT NULL,
     [IsDefault]         BIT             NOT NULL    DEFAULT 0,  -- Default teams created at provisioning
     [IsActive]          BIT             NOT NULL    DEFAULT 1,
@@ -19,4 +19,7 @@ CREATE TABLE [dbo].[Team]
     CONSTRAINT [FK_Team_Sport] FOREIGN KEY ([SportId])
         REFERENCES [dbo].[Sport]([SportId])
 );
+GO
+
+CREATE UNIQUE INDEX [IX_Team_StreamerId_TeamCode] ON [dbo].[Team] ([StreamerId], [TeamCode]);
 GO

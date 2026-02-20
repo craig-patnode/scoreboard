@@ -36,7 +36,7 @@ GO
 
 -- Default Teams for Craig (Soccer)
 SET IDENTITY_INSERT [dbo].[Team] ON;
-INSERT INTO [dbo].[Team] ([TeamId], [StreamerId], [TeamName], [ShortName], [JerseyColor], [NumberColor], [SportId], [IsDefault])
+INSERT INTO [dbo].[Team] ([TeamId], [StreamerId], [TeamName], [TeamCode], [JerseyColor], [NumberColor], [SportId], [IsDefault])
 VALUES
     (1, 1, N'ECNL',      'ECNL',  '#8B0000', '#FFFFFF', 1, 1),  -- Craig's home team (dark red)
     (2, 1, N'Opponent',   'OPP',   '#FFFFFF', '#003366', 1, 1),  -- Craig's default opponent (white)
