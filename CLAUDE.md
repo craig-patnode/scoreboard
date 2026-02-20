@@ -48,6 +48,12 @@
   - Any file containing passwords, connection strings, or secrets
   - Check `git status` before every commit and verify only source code changes are included
 
+### Bug Fix Process
+- When fixing a bug, perform root cause analysis to understand WHY it happened
+- After each fix, update the "Lessons Learned" section in this file with the finding
+- Before committing CLAUDE.md changes, ask user to approve the proposed additions
+- Review Lessons Learned before writing new code to avoid repeating past mistakes
+
 ### Azure Resources
 - App Service: `scoreboard-app`
 - Resources are manually deployed to Azure
@@ -58,3 +64,21 @@
 - SignalR for real-time updates
 - Azure SQL Database backend
 - Multi-tenant design with StreamKey-based isolation
+
+## Lessons Learned
+Captures root cause analysis from bugs to prevent recurrence.
+
+### Deployment & Configuration
+- `dotnet publish` without specifying a project won't include static files (wwwroot) - always target the specific `.csproj`
+- Azure CLI escapes special characters (`!`, `#`, `^`) in passwords - use Azure Portal for connection strings with special chars, or avoid special chars in passwords
+- Azure App Service has TWO config sections: "Connection strings" and "Application settings" - App Settings override Connection Strings, so conflicting entries cause hard-to-debug issues
+- Always set `ASPNETCORE_ENVIRONMENT=Production` in Azure App Service settings
+
+### API Design
+- Signup/registration endpoints should be idempotent - if email exists and password matches, treat as login instead of error
+- All API endpoints should have try-catch error handling returning user-friendly messages
+- Never expose raw exception details to end users in production
+
+### Code Practices
+- Never hardcode validation values in frontend JavaScript - always call backend API
+- Static files in wwwroot are only deployed when the correct project is published
