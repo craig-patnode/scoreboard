@@ -33,3 +33,16 @@ appsettings.Development.json
 ## OS
 .DS_Store
 Thumbs.db
+
+## Azure & Debug Files
+azure-logs/
+azure-logs*.zip
+*.log
+test-*.sh
+debug-*.sh
+
+## Security - Never commit these
+*password*.sh
+*secret*.sh
+*.env.local
+*.env.production
