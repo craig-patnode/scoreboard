@@ -202,4 +202,14 @@ public class UndoPenaltyRequest
     public string Team { get; set; } = "home";
 }
 
+/// <summary>
+/// Coupon validation response
+/// </summary>
+public class CouponValidationResponse
+{
+    public bool IsValid { get; set; }
+    public string? Message { get; set; }
+    public decimal DiscountPercent { get; set; }
+    public string? Description { get; set; }
+}
 

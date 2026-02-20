@@ -30,4 +30,11 @@ public class AuthController : ControllerBase
         if (!result.Success) return Unauthorized(result);
         return Ok(result);
     }
+
+    [HttpGet("validate-coupon/{code}")]
+    public async Task<IActionResult> ValidateCoupon(string code)
+    {
+        var result = await _authService.ValidateCouponAsync(code);
+        return Ok(result);
+    }
 }

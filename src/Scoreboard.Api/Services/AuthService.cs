@@ -126,6 +126,30 @@ public class AuthService
             .FirstOrDefaultAsync(s => s.StreamerId == streamerId && s.IsActive && !s.IsBlocked);
     }
 
+    public async Task<CouponValidationResponse> ValidateCouponAsync(string code)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+            return new CouponValidationResponse { IsValid = false, Message = "Coupon code is required." };
+
+        var discount = await _db.Discounts.FirstOrDefaultAsync(d =>
+            d.CouponCode.ToUpper() == code.ToUpper()
+            && d.IsActive
+            && d.ValidFromUtc <= DateTime.UtcNow
+            && (d.ValidToUtc == null || d.ValidToUtc > DateTime.UtcNow)
+            && (d.MaxRedemptions == null || d.CurrentRedemptions < d.MaxRedemptions));
+
+        if (discount == null)
+            return new CouponValidationResponse { IsValid = false, Message = "Invalid coupon code." };
+
+        return new CouponValidationResponse
+        {
+            IsValid = true,
+            Message = $"Coupon applied! {discount.DiscountPercent}% off.",
+            DiscountPercent = discount.DiscountPercent ?? 0,
+            Description = discount.Description
+        };
+    }
+
     private string GenerateJwtToken(Streamer streamer)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
