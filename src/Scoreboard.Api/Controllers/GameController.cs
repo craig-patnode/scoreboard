@@ -101,9 +101,20 @@ public class GameController : ControllerBase
     [HttpPost("create")]
     public async Task<IActionResult> CreateGame([FromBody] CreateGameRequest request)
     {
-        var game = await _gameService.CreateGameAsync(GetStreamerId(), request);
-        await BroadcastStateAsync();
-        return Ok(new { game.GameId });
+        try
+        {
+            var game = await _gameService.CreateGameAsync(GetStreamerId(), request);
+            await BroadcastStateAsync();
+            return Ok(new { game.GameId });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new
+            {
+                error = "Failed to create game.",
+                message = "An error occurred while setting up the game. Please try again."
+            });
+        }
     }
 
     [Authorize]

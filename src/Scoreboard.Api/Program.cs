@@ -81,6 +81,21 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+// Global exception handler — returns user-friendly JSON for all unhandled exceptions
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        context.Response.StatusCode = 500;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(new
+        {
+            error = "An unexpected error occurred.",
+            message = "Please try again or contact support if the issue persists."
+        });
+    });
+});
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

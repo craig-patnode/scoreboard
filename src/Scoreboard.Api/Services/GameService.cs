@@ -16,6 +16,32 @@ public class GameService
     }
 
     /// <summary>
+    /// Ensure a default Sport record exists and return its SportId.
+    /// Avoids hardcoding SportId = 1 which fails if the Sport table is empty.
+    /// </summary>
+    private async Task<int> GetOrCreateDefaultSportIdAsync()
+    {
+        var sport = await _db.Sports.FirstOrDefaultAsync(s => s.SportCode == "SOC" && s.IsActive);
+        if (sport != null) return sport.SportId;
+
+        sport = new Sport
+        {
+            SportName = "Soccer",
+            SportCode = "SOC",
+            HalvesCount = 2,
+            PeriodName = "Half",
+            HasCards = true,
+            HasTimer = true,
+            TimerDirection = "UP",
+            DefaultPeriodLengthSeconds = 2700,
+            IsActive = true
+        };
+        _db.Sports.Add(sport);
+        await _db.SaveChangesAsync();
+        return sport.SportId;
+    }
+
+    /// <summary>
     /// Get the full game state DTO by stream key — WITHOUT logo data.
     /// </summary>
     public async Task<GameStateDto?> GetGameStateByStreamKeyAsync(Guid streamKey)
@@ -112,6 +138,9 @@ public class GameService
         if (existingGames.Any())
             await _db.SaveChangesAsync();
 
+        // Ensure a default sport exists (avoids FK violation on empty Sport table)
+        var sportId = await GetOrCreateDefaultSportIdAsync();
+
         // Look up by TeamCode — stable, never changes regardless of team name
         var homeTeam = await _db.Teams
             .FirstOrDefaultAsync(t => t.StreamerId == streamerId && t.TeamCode == "HOME" && t.IsActive);
@@ -128,7 +157,7 @@ public class GameService
                 TeamCode = "HOME",
                 JerseyColor = "#8B0000",
                 NumberColor = "#FFFFFF",
-                SportId = 1,
+                SportId = sportId,
                 IsDefault = true
             };
             _db.Teams.Add(homeTeam);
@@ -144,7 +173,7 @@ public class GameService
                 TeamCode = "OPP",
                 JerseyColor = "#FFFFFF",
                 NumberColor = "#003366",
-                SportId = 1,
+                SportId = sportId,
                 IsDefault = true
             };
             _db.Teams.Add(awayTeam);
@@ -179,7 +208,7 @@ public class GameService
         var game = new Game
         {
             StreamerId = streamerId,
-            SportId = 1, // Soccer for now
+            SportId = sportId,
             HomeTeamId = homeTeamId,
             AwayTeamId = awayTeamId,
             GameDateUtc = DateTime.UtcNow,
