@@ -36,9 +36,14 @@
   - Example: `users/craigp/implement_coupon_validation`
 - **One PR per fix/feature** - Create separate PRs for each logical change, don't bundle unrelated changes
 - **One open PR at a time** - Only one PR should be open at any given time to avoid merge conflicts
-  - Before creating a new PR, prompt the user to approve/merge the existing open PR first
+  - Before creating a new PR, **always run `gh pr list --state open`** to check for existing open PRs — never assume
+  - If an open PR exists: prompt the user to approve/merge it first
   - After the existing PR is merged: switch to `main`, pull latest, then create the new feature branch from `main`
   - If a PR has merge conflicts: switch to `main`, pull, then merge `main` into the feature branch to resolve
+- **Never edit files on a stale branch** — always create the new feature branch first, then make changes
+  - Switch to `main` and pull: `git checkout main && git pull origin main`
+  - Create new branch: `git checkout -b users/craigp/<branch_name>`
+  - Only then start editing files — this avoids having to stage/unstage changes on old branches
 - **Before creating PR**: Always pull from `main` first to ensure branch is up to date
   - `git checkout main && git pull origin main`
   - `git checkout <feature-branch> && git merge main`
