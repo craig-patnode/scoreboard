@@ -1,160 +1,160 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Pre-Game Overlay</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
-    <style>
-        :root {
-            --board-bg: linear-gradient(180deg, #05295d 0%, #004b8b 50%, #05295d 100%);
-            --board-border: 3px solid rgba(255,255,255,0.15);
-            --accent-color: #FFD700;
-            --text-primary: #ffffff;
-            --text-secondary: rgba(255,255,255,0.6);
-            --text-muted: rgba(255,255,255,0.5);
-        }
+	<meta charset="UTF-8">
+	<title>Pre-Game Overlay</title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+	<style>
+		:root {
+			--board-bg: linear-gradient(180deg, #05295d 0%, #004b8b 50%, #05295d 100%);
+			--board-border: 3px solid rgba(255,255,255,0.15);
+			--accent-color: #FFD700;
+			--text-primary: #ffffff;
+			--text-secondary: rgba(255,255,255,0.6);
+			--text-muted: rgba(255,255,255,0.5);
+		}
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: transparent; font-family: 'Assistant', 'Segoe UI', 'Arial', sans-serif; overflow: hidden; }
+		* { margin: 0; padding: 0; box-sizing: border-box; }
+		body { background: transparent; font-family: 'Assistant', 'Segoe UI', 'Arial', sans-serif; overflow: hidden; }
 
-        .pregame-container {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            filter: drop-shadow(0 8px 30px rgba(0, 0, 0, 0.6));
-            animation: fadeIn 1.5s ease-out forwards; opacity: 0;
-        }
-        @keyframes fadeIn { to { opacity: 1; } }
+		.pregame-container {
+			position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+			filter: drop-shadow(0 8px 30px rgba(0, 0, 0, 0.6));
+			animation: fadeIn 1.5s ease-out forwards; opacity: 0;
+		}
+		@keyframes fadeIn { to { opacity: 1; } }
 
-        .pregame-card {
-            background: var(--board-bg);
-            border: var(--board-border);
-            border-radius: 8px;
-            padding: 12px 50px; text-align: center;
-            min-width: 420px;
-        }
+		.pregame-card {
+			background: var(--board-bg);
+			border: var(--board-border);
+			border-radius: 8px;
+			padding: 12px 50px; text-align: center;
+			min-width: 420px;
+		}
 
-        .matchup-label {
-            font-size: 11px; color: var(--text-secondary); text-transform: uppercase;
-            letter-spacing: 4px; margin-bottom: 12px;
-        }
+		.matchup-label {
+			font-size: 11px; color: var(--text-secondary); text-transform: uppercase;
+			letter-spacing: 4px; margin-bottom: 12px;
+		}
 
-        .teams-row { display: flex; align-items: center; justify-content: center; gap: 40px; }
+		.teams-row { display: flex; align-items: center; justify-content: center; gap: 40px; }
 
-        .team-block { text-align: center; min-width: 160px; }
+		.team-block { text-align: center; min-width: 160px; }
 
-        .team-crest {
-            width: 50px; height: 50px; margin: 0 auto 6px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 18px; font-weight: 900; color: #fff;
-        }
-        .team-crest img {
-            max-width: 100%; max-height: 100%; object-fit: contain;
-        }
+		.team-crest {
+			width: 50px; height: 50px; margin: 0 auto 6px;
+			display: flex; align-items: center; justify-content: center;
+			font-size: 18px; font-weight: 900; color: #fff;
+		}
+		.team-crest img {
+			max-width: 100%; max-height: 100%; object-fit: contain;
+		}
 
-        .team-name-pg {
-            font-size: 17px; font-weight: 900; color: var(--text-primary);
-            text-transform: uppercase; font-family: 'Arial Black', 'Impact', sans-serif;
-            position: relative; z-index: 10;
-        }
+		.team-name-pg {
+			font-size: 17px; font-weight: 900; color: var(--text-primary);
+			text-transform: uppercase; font-family: 'Arial Black', 'Impact', sans-serif;
+			position: relative; z-index: 10;
+		}
 
-        .vs-badge {
-            font-size: 22px; font-weight: 900; color: var(--accent-color);
-            font-family: 'Arial Black', sans-serif;
-            text-shadow: 0 0 20px rgba(255,215,0,0.4);
-        }
+		.vs-badge {
+			font-size: 22px; font-weight: 900; color: var(--accent-color);
+			font-family: 'Arial Black', sans-serif;
+			text-shadow: 0 0 20px rgba(255,215,0,0.4);
+		}
 
-        .game-info {
-            margin-top: 12px; font-size: 11px; color: var(--text-muted);
-            letter-spacing: 1px;
-        }
-    </style>
+		.game-info {
+			margin-top: 12px; font-size: 11px; color: var(--text-muted);
+			letter-spacing: 1px;
+		}
+	</style>
 </head>
 <body>
-    <div class="pregame-container">
-        <div class="pregame-card">
-            <div class="matchup-label">Match Day</div>
-            <div class="teams-row">
-                <div class="team-block">
-                    <div class="team-crest" id="homeCrest"></div>
-                    <div class="team-name-pg" id="homeTeamName">HOME</div>
-                </div>
-                <div class="vs-badge">VS</div>
-                <div class="team-block">
-                    <div class="team-crest" id="awayCrest"></div>
-                    <div class="team-name-pg" id="awayTeamName">OPPONENT</div>
-                </div>
-            </div>
-            <div class="game-info" id="gameInfo"></div>
-        </div>
-    </div>
+	<div class="pregame-container">
+		<div class="pregame-card">
+			<div class="matchup-label">Match Day</div>
+			<div class="teams-row">
+				<div class="team-block">
+					<div class="team-crest" id="homeCrest"></div>
+					<div class="team-name-pg" id="homeTeamName">HOME</div>
+				</div>
+				<div class="vs-badge">VS</div>
+				<div class="team-block">
+					<div class="team-crest" id="awayCrest"></div>
+					<div class="team-name-pg" id="awayTeamName">OPPONENT</div>
+				</div>
+			</div>
+			<div class="game-info" id="gameInfo"></div>
+		</div>
+	</div>
 
-    <script>
-        // ===== Theme System =====
-        const THEMES = {
-            DeepTide: {
-                '--board-bg': 'linear-gradient(180deg, #05295d 0%, #004b8b 50%, #05295d 100%)',
-                '--board-border': '3px solid rgba(255,255,255,0.15)',
-                '--accent-color': '#FFD700',
-                '--text-primary': '#ffffff',
-                '--text-secondary': 'rgba(255,255,255,0.6)',
-                '--text-muted': 'rgba(255,255,255,0.5)'
-            }
-        };
+	<script>
+		// ===== Theme System =====
+		const THEMES = {
+			DeepTide: {
+				'--board-bg': 'linear-gradient(180deg, #05295d 0%, #004b8b 50%, #05295d 100%)',
+				'--board-border': '3px solid rgba(255,255,255,0.15)',
+				'--accent-color': '#FFD700',
+				'--text-primary': '#ffffff',
+				'--text-secondary': 'rgba(255,255,255,0.6)',
+				'--text-muted': 'rgba(255,255,255,0.5)'
+			}
+		};
 
-        function applyTheme() {
-            const params = new URLSearchParams(window.location.search);
-            const themeName = params.get('boardStyleName') || 'DeepTide';
-            const theme = THEMES[themeName] || THEMES.DeepTide;
-            const root = document.documentElement;
-            for (const [prop, value] of Object.entries(theme)) {
-                root.style.setProperty(prop, value);
-            }
-        }
-        applyTheme();
+		function applyTheme() {
+			const params = new URLSearchParams(window.location.search);
+			const themeName = params.get('boardStyleName') || 'DeepTide';
+			const theme = THEMES[themeName] || THEMES.DeepTide;
+			const root = document.documentElement;
+			for (const [prop, value] of Object.entries(theme)) {
+				root.style.setProperty(prop, value);
+			}
+		}
+		applyTheme();
 
-        // ===== Stream Key — robust extraction =====
-        function getStreamKey() {
-            const params = new URLSearchParams(window.location.search);
-            if (params.get('key')) return params.get('key');
-            const pathParts = window.location.pathname.split('/');
-            const last = pathParts[pathParts.length - 1];
-            if (last && !last.includes('.')) return last;
-            return null;
-        }
-        const streamKey = getStreamKey();
+		// ===== Stream Key — robust extraction =====
+		function getStreamKey() {
+			const params = new URLSearchParams(window.location.search);
+			if (params.get('key')) return params.get('key');
+			const pathParts = window.location.pathname.split('/');
+			const last = pathParts[pathParts.length - 1];
+			if (last && !last.includes('.')) return last;
+			return null;
+		}
+		const streamKey = getStreamKey();
 
-        function renderCrest(elementId, logoUrl, jerseyColor, numberColor, teamCode) {
-            const el = document.getElementById(elementId);
-            if (logoUrl) {
-                el.innerHTML = `<img src="${logoUrl}" alt="${teamCode || ''}">`;
-            } else {
-                el.style.background = jerseyColor || '#8B0000';
-                el.style.color = numberColor || '#fff';
-                el.style.borderRadius = '8px';
-                el.textContent = (teamCode || '?').substring(0, 3);
-            }
-        }
+		function renderCrest(elementId, logoUrl, jerseyColor, numberColor, teamCode) {
+			const el = document.getElementById(elementId);
+			if (logoUrl) {
+				el.innerHTML = `<img src="${logoUrl}" alt="${teamCode || ''}">`;
+			} else {
+				el.style.background = jerseyColor || '#8B0000';
+				el.style.color = numberColor || '#fff';
+				el.style.borderRadius = '8px';
+				el.textContent = (teamCode || '?').substring(0, 3);
+			}
+		}
 
-        function updatePreGame(state) {
-            document.getElementById('homeTeamName').textContent = state.homeTeamName || 'HOME';
-            document.getElementById('awayTeamName').textContent = state.awayTeamName || 'OPPONENT';
+		function updatePreGame(state) {
+			document.getElementById('homeTeamName').textContent = state.homeTeamName || 'HOME';
+			document.getElementById('awayTeamName').textContent = state.awayTeamName || 'OPPONENT';
 
-            renderCrest('homeCrest', state.homeLogoUrl, state.homeJerseyColor, state.homeNumberColor, state.homeTeamCode || state.homeTeamName);
-            renderCrest('awayCrest', state.awayLogoUrl, state.awayJerseyColor, state.awayNumberColor, state.awayTeamCode || state.awayTeamName);
+			renderCrest('homeCrest', state.homeLogoUrl, state.homeJerseyColor, state.homeNumberColor, state.homeTeamCode || state.homeTeamName);
+			renderCrest('awayCrest', state.awayLogoUrl, state.awayJerseyColor, state.awayNumberColor, state.awayTeamCode || state.awayTeamName);
 
-            const info = document.getElementById('gameInfo');
-            const date = state.gameDateUtc ? new Date(state.gameDateUtc + 'Z') : new Date();
-            info.textContent = `${state.sportName || 'Soccer'} • ${date.toLocaleDateString()} ${state.venue ? '• ' + state.venue : ''}`;
-        }
+			const info = document.getElementById('gameInfo');
+			const date = state.gameDateUtc ? new Date(state.gameDateUtc + 'Z') : new Date();
+			info.textContent = `${state.sportName || 'Soccer'} • ${date.toLocaleDateString()} ${state.venue ? '• ' + state.venue : ''}`;
+		}
 
-        const connection = new signalR.HubConnectionBuilder()
-            .withUrl(`${window.location.origin}/hubs/game`)
-            .withAutomaticReconnect()
-            .build();
+		const connection = new signalR.HubConnectionBuilder()
+			.withUrl(`${window.location.origin}/hubs/game`)
+			.withAutomaticReconnect()
+			.build();
 
-        connection.on("GameStateUpdated", updatePreGame);
-        connection.onreconnected(() => { if (streamKey) connection.invoke("JoinStream", streamKey); });
-        connection.start().then(() => { if (streamKey) connection.invoke("JoinStream", streamKey); })
-            .catch(() => setTimeout(() => location.reload(), 5000));
-    </script>
+		connection.on("GameStateUpdated", updatePreGame);
+		connection.onreconnected(() => { if (streamKey) connection.invoke("JoinStream", streamKey); });
+		connection.start().then(() => { if (streamKey) connection.invoke("JoinStream", streamKey); })
+			.catch(() => setTimeout(() => location.reload(), 5000));
+	</script>
 </body>
 </html>
