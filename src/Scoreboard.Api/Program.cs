@@ -3,6 +3,7 @@ using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Scoreboard.Api.Data;
 using Scoreboard.Api.Hubs;
@@ -10,9 +11,14 @@ using Scoreboard.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Database
+// Database — with exponential backoff retry for transient SQL errors
 builder.Services.AddDbContext<ScoreboardDbContext>(options =>
-	options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+	options.UseSqlServer(
+		builder.Configuration.GetConnectionString("DefaultConnection"),
+		sqlOptions => sqlOptions.EnableRetryOnFailure(
+			maxRetryCount: 5,
+			maxRetryDelay: TimeSpan.FromSeconds(30),
+			errorNumbersToAdd: null)));
 
 // Services
 builder.Services.AddScoped<GameService>();
@@ -59,6 +65,10 @@ builder.Services.AddSignalR();
 
 // Controllers
 builder.Services.AddControllers();
+
+// Health checks
+builder.Services.AddHealthChecks()
+	.AddDbContextCheck<ScoreboardDbContext>("sql", tags: new[] { "ready" });
 
 // CORS — C3: use configuration-based origins instead of AllowAll
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
@@ -181,6 +191,8 @@ app.MapHub<GameHub>("/hubs/game", options =>
 {
 	options.AllowStatefulReconnects = true;
 }).RequireCors("SignalR");
+
+app.MapHealthChecks("/healthz");
 
 // Fallback to index.html for SPA-style routing
 app.MapFallbackToFile("index.html");
