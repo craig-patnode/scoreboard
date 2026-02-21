@@ -1,705 +1,705 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scoreboard Overlay</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
-    <style>
-        :root {
-            --board-bg: linear-gradient(180deg, #05295d 0%, #004b8b 50%, #05295d 100%);
-            --score-bg: radial-gradient(circle, #5b84c1 0%, #004b8b 55%, #05295d 100%);
-        }
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Scoreboard Overlay</title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+	<style>
+		:root {
+			--board-bg: linear-gradient(180deg, #05295d 0%, #004b8b 50%, #05295d 100%);
+			--score-bg: radial-gradient(circle, #5b84c1 0%, #004b8b 55%, #05295d 100%);
+		}
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: transparent; font-family: 'Assistant', 'Segoe UI', 'Arial', sans-serif; overflow: hidden; }
+		* { margin: 0; padding: 0; box-sizing: border-box; }
+		body { background: transparent; font-family: 'Assistant', 'Segoe UI', 'Arial', sans-serif; overflow: hidden; }
 
-        .scoreboard-container {
-            position: absolute; top: 20px; left: 20px;
-            filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.5));
-            animation: slideInFromLeft 1s ease-out forwards;
-        }
-        @keyframes slideInFromLeft {
-            0% { transform: translateX(-100%); opacity: 0; }
-            100% { transform: translateX(0); opacity: 1; }
-        }
+		.scoreboard-container {
+			position: absolute; top: 20px; left: 20px;
+			filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.5));
+			animation: slideInFromLeft 1s ease-out forwards;
+		}
+		@keyframes slideInFromLeft {
+			0% { transform: translateX(-100%); opacity: 0; }
+			100% { transform: translateX(0); opacity: 1; }
+		}
 
-        /* Wrapper so logos can overflow outside the bar */
-        .scoreboard-wrapper { position: relative; }
+		/* Wrapper so logos can overflow outside the bar */
+		.scoreboard-wrapper { position: relative; }
 
-        .scoreboard { position: relative; display: flex; align-items: stretch; height: 65px; }
+		.scoreboard { position: relative; display: flex; align-items: stretch; height: 65px; }
 
-        /* ===== TIMER BOX — reduced font, vertically centered ===== */
-        .timer-box {
-            background: #ffffff; border: 1px solid #ffffff; padding: 0 14px;
-            display: flex; align-items: center; justify-content: center;
-            min-width: 110px; position: relative; z-index: 5;
-            flex-direction: column; gap: 0px;
-            transition: background 0.5s ease;
-        }
-        .timer-box.period-expired { background: #FFD700; border-color: #FFD700; }
+		/* ===== TIMER BOX — reduced font, vertically centered ===== */
+		.timer-box {
+			background: #ffffff; border: 1px solid #ffffff; padding: 0 14px;
+			display: flex; align-items: center; justify-content: center;
+			min-width: 110px; position: relative; z-index: 5;
+			flex-direction: column; gap: 0px;
+			transition: background 0.5s ease;
+		}
+		.timer-box.period-expired { background: #FFD700; border-color: #FFD700; }
 
-        .timer {
-            font-size: 28px; font-weight: 900; color: #000000;
-            font-family: 'Arial Black', 'Impact', sans-serif;
-            line-height: 1; margin-top: 2px;
-        }
-        .timer.running { animation: timerPulse 2s ease-in-out infinite; }
-        @keyframes timerPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
+		.timer {
+			font-size: 28px; font-weight: 900; color: #000000;
+			font-family: 'Arial Black', 'Impact', sans-serif;
+			line-height: 1; margin-top: 2px;
+		}
+		.timer.running { animation: timerPulse 2s ease-in-out infinite; }
+		@keyframes timerPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
 
-        .period-label {
-            font-size: 7px; font-weight: 700; color: #555; text-transform: uppercase;
-            letter-spacing: 1px; line-height: 1; margin-top: 2px;
-        }
-        .timer-box.period-expired .period-label { color: #333; }
+		.period-label {
+			font-size: 7px; font-weight: 700; color: #555; text-transform: uppercase;
+			letter-spacing: 1px; line-height: 1; margin-top: 2px;
+		}
+		.timer-box.period-expired .period-label { color: #333; }
 
-        .divider-left {
-            width: 43px; background: #ffffff;
-            position: relative; z-index: 4;
-        }
-        .divider-left.period-expired { background: #FFD700; }
+		.divider-left {
+			width: 43px; background: #ffffff;
+			position: relative; z-index: 4;
+		}
+		.divider-left.period-expired { background: #FFD700; }
 
-        .main-bar {
-            background: var(--board-bg);
-            flex: 1; display: flex; align-items: stretch; position: relative;
-        }
+		.main-bar {
+			background: var(--board-bg);
+			flex: 1; display: flex; align-items: stretch; position: relative;
+		}
 
-        .metallic-stripe-container {
-            position: absolute; top: 2px; left: 10px; right: 10px;
-            height: calc(100% - 4px); z-index: 1; display: flex;
-        }
-        .metallic-stripe-home, .metallic-stripe-away {
-            flex: 1;
-            background: linear-gradient(180deg, #4f4f4f 0%, #d0d0d0 45%, #4f4f4f 100%);
-            transition: background 3s ease-in-out;
-        }
+		.metallic-stripe-container {
+			position: absolute; top: 2px; left: 10px; right: 10px;
+			height: calc(100% - 4px); z-index: 1; display: flex;
+		}
+		.metallic-stripe-home, .metallic-stripe-away {
+			flex: 1;
+			background: linear-gradient(180deg, #4f4f4f 0%, #d0d0d0 45%, #4f4f4f 100%);
+			transition: background 3s ease-in-out;
+		}
 
-        .team-section {
-            flex: 1; display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            position: relative; z-index: 2; min-width: 200px; padding: 0 10px;
-        }
+		.team-section {
+			flex: 1; display: flex; flex-direction: column;
+			align-items: center; justify-content: center;
+			position: relative; z-index: 2; min-width: 200px; padding: 0 10px;
+		}
 
-        /* ===== OVERSIZED TEAM LOGOS — flanking the bar ===== */
-        /* Home logo: left edge of home section, overlapping outward */
-        .team-logo-home {
-            position: absolute;
-            top: 50%; left: 105px;
-            transform: translateY(-50%);
-            width: 85px; height: 85px;
-            z-index: 10;
-            opacity: 0;
-            transition: opacity 1s ease-in-out;
-            pointer-events: none;
-        }
-        /* Away logo: right edge of away section, overlapping outward */
-        .team-logo-away {
-            position: absolute;
-            top: 50%; right: -50px;
-            transform: translateY(-50%);
-            width: 85px; height: 85px;
-            z-index: 10;
-            opacity: 0;
-            transition: opacity 1s ease-in-out;
-            pointer-events: none;
-        }
-        .team-logo-home img, .team-logo-away img {
-            width: 100%; height: 100%; object-fit: contain;
-            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6));
-        }
-        .team-logo-home.visible, .team-logo-away.visible { opacity: 1; }
+		/* ===== OVERSIZED TEAM LOGOS — flanking the bar ===== */
+		/* Home logo: left edge of home section, overlapping outward */
+		.team-logo-home {
+			position: absolute;
+			top: 50%; left: 105px;
+			transform: translateY(-50%);
+			width: 85px; height: 85px;
+			z-index: 10;
+			opacity: 0;
+			transition: opacity 1s ease-in-out;
+			pointer-events: none;
+		}
+		/* Away logo: right edge of away section, overlapping outward */
+		.team-logo-away {
+			position: absolute;
+			top: 50%; right: -50px;
+			transform: translateY(-50%);
+			width: 85px; height: 85px;
+			z-index: 10;
+			opacity: 0;
+			transition: opacity 1s ease-in-out;
+			pointer-events: none;
+		}
+		.team-logo-home img, .team-logo-away img {
+			width: 100%; height: 100%; object-fit: contain;
+			filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6));
+		}
+		.team-logo-home.visible, .team-logo-away.visible { opacity: 1; }
 
-        .team-name-wrapper {
-            width: 100%; display: flex; justify-content: center; align-items: center;
-            overflow: visible;
-        }
-        .team-name {
-            color: #000000; font-size: 5px; font-weight: 900; text-transform: uppercase;
-            letter-spacing: 0.5px; font-family: 'Arial Black', 'Impact', sans-serif;
-            text-align: center; transition: color 1.2s ease-in-out;
-            transform-origin: center top; width: 200px; white-space: normal;
-            overflow-wrap: break-word; padding-top: 10px;
-            position: relative; z-index: 20;
-        }
-        @keyframes swellSubtle { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
-        .team-name.swell { animation: swellSubtle 3s ease-in-out forwards; }
+		.team-name-wrapper {
+			width: 100%; display: flex; justify-content: center; align-items: center;
+			overflow: visible;
+		}
+		.team-name {
+			color: #000000; font-size: 5px; font-weight: 900; text-transform: uppercase;
+			letter-spacing: 0.5px; font-family: 'Arial Black', 'Impact', sans-serif;
+			text-align: center; transition: color 1.2s ease-in-out;
+			transform-origin: center top; width: 200px; white-space: normal;
+			overflow-wrap: break-word; padding-top: 10px;
+			position: relative; z-index: 20;
+		}
+		@keyframes swellSubtle { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
+		.team-name.swell { animation: swellSubtle 3s ease-in-out forwards; }
 
-        .score-section {
-            background: var(--score-bg);
-            padding: 0 40px; display: flex; align-items: center; justify-content: center;
-            gap: 20px; position: relative; z-index: 3;
-            min-width: 150px; margin: 0;
-            border-left: 2px solid rgba(255,255,255,0.15);
-            border-right: 2px solid rgba(255,255,255,0.15);
-        }
-        .score {
-            font-size: 40px; font-weight: 600; color: #ffffff;
-            font-family: 'Assistant', 'Arial', sans-serif;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-            min-width: 35px; text-align: center;
-        }
-        .score-separator { font-size: 40px; font-weight: 600; color: #ffffff; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); }
+		.score-section {
+			background: var(--score-bg);
+			padding: 0 40px; display: flex; align-items: center; justify-content: center;
+			gap: 20px; position: relative; z-index: 3;
+			min-width: 150px; margin: 0;
+			border-left: 2px solid rgba(255,255,255,0.15);
+			border-right: 2px solid rgba(255,255,255,0.15);
+		}
+		.score {
+			font-size: 40px; font-weight: 600; color: #ffffff;
+			font-family: 'Assistant', 'Arial', sans-serif;
+			text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+			min-width: 35px; text-align: center;
+		}
+		.score-separator { font-size: 40px; font-weight: 600; color: #ffffff; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); }
 
-        @keyframes scoreFlash {
-            0% { transform: scale(1); color: #ffffff; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
-            35% { transform: scale(1.15); color: #FFD700; text-shadow: 0 0 25px rgba(255,215,0,0.8), 2px 2px 4px rgba(0,0,0,0.5); }
-            65% { transform: scale(1.05); color: #FFD700; text-shadow: 0 0 15px rgba(255,215,0,0.5), 2px 2px 4px rgba(0,0,0,0.5); }
-            100% { transform: scale(1); color: #ffffff; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
-        }
-        .score.updated { animation: scoreFlash 0.8s ease-in-out; }
+		@keyframes scoreFlash {
+			0% { transform: scale(1); color: #ffffff; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+			35% { transform: scale(1.15); color: #FFD700; text-shadow: 0 0 25px rgba(255,215,0,0.8), 2px 2px 4px rgba(0,0,0,0.5); }
+			65% { transform: scale(1.05); color: #FFD700; text-shadow: 0 0 15px rgba(255,215,0,0.5), 2px 2px 4px rgba(0,0,0,0.5); }
+			100% { transform: scale(1); color: #ffffff; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+		}
+		.score.updated { animation: scoreFlash 0.8s ease-in-out; }
 
-        .card-bars { display: flex; flex-direction: column; gap: 2px; margin-top: 3px; align-items: center; }
-        .card-bar-row { display: flex; gap: 3px; }
-        .card-bar {
-            width: 16px; height: 5px; border-radius: 2px;
-            opacity: 0; transform: scaleX(0);
-            transition: opacity 0.3s ease, transform 0.3s ease;
-        }
-        .card-bar.visible { opacity: 1; transform: scaleX(1); }
-        .yellow-bar { background: #FFD700; }
-        .red-bar { background: #DC143C; }
+		.card-bars { display: flex; flex-direction: column; gap: 2px; margin-top: 3px; align-items: center; }
+		.card-bar-row { display: flex; gap: 3px; }
+		.card-bar {
+			width: 16px; height: 5px; border-radius: 2px;
+			opacity: 0; transform: scaleX(0);
+			transition: opacity 0.3s ease, transform 0.3s ease;
+		}
+		.card-bar.visible { opacity: 1; transform: scaleX(1); }
+		.yellow-bar { background: #FFD700; }
+		.red-bar { background: #DC143C; }
 
-        @keyframes barPopIn {
-            0%   { opacity: 0; transform: scaleX(0) scaleY(0.5); }
-            50%  { opacity: 1; transform: scaleX(1.3) scaleY(1.2); }
-            75%  { transform: scaleX(0.9) scaleY(0.9); }
-            100% { opacity: 1; transform: scaleX(1) scaleY(1); }
-        }
-        .card-bar.pop { animation: barPopIn 0.4s ease-out forwards; }
+		@keyframes barPopIn {
+			0%   { opacity: 0; transform: scaleX(0) scaleY(0.5); }
+			50%  { opacity: 1; transform: scaleX(1.3) scaleY(1.2); }
+			75%  { transform: scaleX(0.9) scaleY(0.9); }
+			100% { opacity: 1; transform: scaleX(1) scaleY(1); }
+		}
+		.card-bar.pop { animation: barPopIn 0.4s ease-out forwards; }
 
-        /* ===== PENALTY SHOOTOUT OVERLAY ===== */
-        .penalty-overlay {
-            margin-top: 6px;
-            background: var(--board-bg);
-            border-radius: 6px;
-            padding: 8px 16px;
-            display: none;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            animation: penSlideIn 0.4s ease-out forwards;
-            border: 2px solid rgba(255,255,255,0.15);
-            margin-left: 153px;  /* align under main-bar (timer-box + divider width) */
-        }
-        .penalty-overlay.visible { display: flex; }
-        @keyframes penSlideIn {
-            0% { opacity: 0; transform: translateY(-8px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
-        .pen-side {
-            display: flex; align-items: center; gap: 4px;
-            flex: 1;
-        }
-        .pen-side.home { justify-content: center; }
-        .pen-side.away { justify-content: center; }
-        .pen-dot {
-            width: 18px; height: 18px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 10px; font-weight: 900; color: #fff;
-            transition: all 0.3s ease;
-        }
-        .pen-dot.goal { background: #4CAF50; }
-        .pen-dot.miss { background: #f44336; }
-        .pen-dot.pending { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); color: rgba(255,255,255,0.3); }
-        .pen-score-center {
-            display: flex; align-items: center; gap: 6px;
-            font-family: 'Arial Black', 'Impact', sans-serif;
-            font-size: 22px; font-weight: 900; color: #FFD700;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
-            min-width: 60px; justify-content: center;
-            flex-shrink: 0;
-        }
-        .pen-score-sep { color: rgba(255,255,255,0.4); font-size: 18px; }
-        .pen-winner {
-            width: 100%; text-align: center;
-            font-size: 13px; font-weight: 900; color: #FFD700;
-            font-family: 'Arial Black', 'Impact', sans-serif;
-            letter-spacing: 2px; text-transform: uppercase;
-            text-shadow: 0 0 15px rgba(255,215,0,0.5);
-            padding-top: 4px; display: none;
-        }
-        .pen-winner.visible { display: block; animation: winnerGlow 1s ease-out forwards; }
-        @keyframes winnerGlow {
-            0% { opacity: 0; transform: scale(0.8); }
-            50% { text-shadow: 0 0 30px rgba(255,215,0,0.8); }
-            100% { opacity: 1; transform: scale(1); }
-        }
+		/* ===== PENALTY SHOOTOUT OVERLAY ===== */
+		.penalty-overlay {
+			margin-top: 6px;
+			background: var(--board-bg);
+			border-radius: 6px;
+			padding: 8px 16px;
+			display: none;
+			align-items: center;
+			justify-content: space-between;
+			flex-wrap: wrap;
+			animation: penSlideIn 0.4s ease-out forwards;
+			border: 2px solid rgba(255,255,255,0.15);
+			margin-left: 153px;  /* align under main-bar (timer-box + divider width) */
+		}
+		.penalty-overlay.visible { display: flex; }
+		@keyframes penSlideIn {
+			0% { opacity: 0; transform: translateY(-8px); }
+			100% { opacity: 1; transform: translateY(0); }
+		}
+		.pen-side {
+			display: flex; align-items: center; gap: 4px;
+			flex: 1;
+		}
+		.pen-side.home { justify-content: center; }
+		.pen-side.away { justify-content: center; }
+		.pen-dot {
+			width: 18px; height: 18px; border-radius: 50%;
+			display: flex; align-items: center; justify-content: center;
+			font-size: 10px; font-weight: 900; color: #fff;
+			transition: all 0.3s ease;
+		}
+		.pen-dot.goal { background: #4CAF50; }
+		.pen-dot.miss { background: #f44336; }
+		.pen-dot.pending { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); color: rgba(255,255,255,0.3); }
+		.pen-score-center {
+			display: flex; align-items: center; gap: 6px;
+			font-family: 'Arial Black', 'Impact', sans-serif;
+			font-size: 22px; font-weight: 900; color: #FFD700;
+			text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+			min-width: 60px; justify-content: center;
+			flex-shrink: 0;
+		}
+		.pen-score-sep { color: rgba(255,255,255,0.4); font-size: 18px; }
+		.pen-winner {
+			width: 100%; text-align: center;
+			font-size: 13px; font-weight: 900; color: #FFD700;
+			font-family: 'Arial Black', 'Impact', sans-serif;
+			letter-spacing: 2px; text-transform: uppercase;
+			text-shadow: 0 0 15px rgba(255,215,0,0.5);
+			padding-top: 4px; display: none;
+		}
+		.pen-winner.visible { display: block; animation: winnerGlow 1s ease-out forwards; }
+		@keyframes winnerGlow {
+			0% { opacity: 0; transform: scale(0.8); }
+			50% { text-shadow: 0 0 30px rgba(255,215,0,0.8); }
+			100% { opacity: 1; transform: scale(1); }
+		}
 
-        .status-indicator {
-            position: absolute; bottom: 20px; left: 20px; width: 10px; height: 10px;
-            border-radius: 50%; background: #4CAF50; box-shadow: 0 0 10px rgba(76,175,80,0.8);
-        }
-        .status-indicator.disconnected {
-            background: #f44336; box-shadow: 0 0 10px rgba(244,67,54,0.8);
-            animation: blink 1s ease-in-out infinite;
-        }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-    </style>
+		.status-indicator {
+			position: absolute; bottom: 20px; left: 20px; width: 10px; height: 10px;
+			border-radius: 50%; background: #4CAF50; box-shadow: 0 0 10px rgba(76,175,80,0.8);
+		}
+		.status-indicator.disconnected {
+			background: #f44336; box-shadow: 0 0 10px rgba(244,67,54,0.8);
+			animation: blink 1s ease-in-out infinite;
+		}
+		@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+	</style>
 </head>
 <body>
-    <div class="scoreboard-container">
-        <div class="scoreboard-wrapper">
-            <!-- Home logo — outside the bar, overlapping left edge -->
-            <div class="team-logo-home" id="homeLogoCrest"></div>
-            <!-- Away logo — outside the bar, overlapping right edge -->
-            <div class="team-logo-away" id="awayLogoCrest"></div>
+	<div class="scoreboard-container">
+		<div class="scoreboard-wrapper">
+			<!-- Home logo — outside the bar, overlapping left edge -->
+			<div class="team-logo-home" id="homeLogoCrest"></div>
+			<!-- Away logo — outside the bar, overlapping right edge -->
+			<div class="team-logo-away" id="awayLogoCrest"></div>
 
-            <div class="scoreboard">
-                <div class="timer-box" id="timerBox">
-                    <div class="timer" id="timer">00:00</div>
-                    <div class="period-label" id="periodLabel">1ST HALF</div>
-                </div>
-                <div class="divider-left"></div>
-                <div class="main-bar">
-                    <div class="metallic-stripe-container">
-                        <div class="metallic-stripe-home" id="metallicStripeHome"></div>
-                        <div class="metallic-stripe-away" id="metallicStripeAway"></div>
-                    </div>
-                    <div class="team-section home" id="homeSection">
-                        <div class="team-name-wrapper">
-                            <div class="team-name" id="homeTeamName">HOME</div>
-                        </div>
-                        <div class="card-bars" id="homeCardBars">
-                            <div class="card-bar-row">
-                                <span class="card-bar yellow-bar" id="homeYellow0"></span>
-                                <span class="card-bar yellow-bar" id="homeYellow1"></span>
-                                <span class="card-bar yellow-bar" id="homeYellow2"></span>
-                            </div>
-                            <div class="card-bar-row">
-                                <span class="card-bar red-bar" id="homeRed0"></span>
-                                <span class="card-bar red-bar" id="homeRed1"></span>
-                                <span class="card-bar red-bar" id="homeRed2"></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="score-section">
-                        <div class="score" id="homeScore">0</div>
-                        <div class="score-separator">-</div>
-                        <div class="score" id="awayScore">0</div>
-                    </div>
-                    <div class="team-section away" id="awaySection">
-                        <div class="team-name-wrapper">
-                            <div class="team-name" id="awayTeamName">OPPONENT</div>
-                        </div>
-                        <div class="card-bars" id="awayCardBars">
-                            <div class="card-bar-row">
-                                <span class="card-bar yellow-bar" id="awayYellow0"></span>
-                                <span class="card-bar yellow-bar" id="awayYellow1"></span>
-                                <span class="card-bar yellow-bar" id="awayYellow2"></span>
-                            </div>
-                            <div class="card-bar-row">
-                                <span class="card-bar red-bar" id="awayRed0"></span>
-                                <span class="card-bar red-bar" id="awayRed1"></span>
-                                <span class="card-bar red-bar" id="awayRed2"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+			<div class="scoreboard">
+				<div class="timer-box" id="timerBox">
+					<div class="timer" id="timer">00:00</div>
+					<div class="period-label" id="periodLabel">1ST HALF</div>
+				</div>
+				<div class="divider-left"></div>
+				<div class="main-bar">
+					<div class="metallic-stripe-container">
+						<div class="metallic-stripe-home" id="metallicStripeHome"></div>
+						<div class="metallic-stripe-away" id="metallicStripeAway"></div>
+					</div>
+					<div class="team-section home" id="homeSection">
+						<div class="team-name-wrapper">
+							<div class="team-name" id="homeTeamName">HOME</div>
+						</div>
+						<div class="card-bars" id="homeCardBars">
+							<div class="card-bar-row">
+								<span class="card-bar yellow-bar" id="homeYellow0"></span>
+								<span class="card-bar yellow-bar" id="homeYellow1"></span>
+								<span class="card-bar yellow-bar" id="homeYellow2"></span>
+							</div>
+							<div class="card-bar-row">
+								<span class="card-bar red-bar" id="homeRed0"></span>
+								<span class="card-bar red-bar" id="homeRed1"></span>
+								<span class="card-bar red-bar" id="homeRed2"></span>
+							</div>
+						</div>
+					</div>
+					<div class="score-section">
+						<div class="score" id="homeScore">0</div>
+						<div class="score-separator">-</div>
+						<div class="score" id="awayScore">0</div>
+					</div>
+					<div class="team-section away" id="awaySection">
+						<div class="team-name-wrapper">
+							<div class="team-name" id="awayTeamName">OPPONENT</div>
+						</div>
+						<div class="card-bars" id="awayCardBars">
+							<div class="card-bar-row">
+								<span class="card-bar yellow-bar" id="awayYellow0"></span>
+								<span class="card-bar yellow-bar" id="awayYellow1"></span>
+								<span class="card-bar yellow-bar" id="awayYellow2"></span>
+							</div>
+							<div class="card-bar-row">
+								<span class="card-bar red-bar" id="awayRed0"></span>
+								<span class="card-bar red-bar" id="awayRed1"></span>
+								<span class="card-bar red-bar" id="awayRed2"></span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
 
-            <!-- Penalty Shootout Overlay -->
-            <div class="penalty-overlay" id="penaltyOverlay">
-                <div class="pen-side home" id="penHomeDots"></div>
-                <div class="pen-score-center">
-                    <span id="penHomeScore">0</span>
-                    <span class="pen-score-sep">-</span>
-                    <span id="penAwayScore">0</span>
-                </div>
-                <div class="pen-side away" id="penAwayDots"></div>
-                <div class="pen-winner" id="penWinner"></div>
-            </div>
-        </div>
-    </div>
-    <div class="status-indicator" id="statusIndicator"></div>
+			<!-- Penalty Shootout Overlay -->
+			<div class="penalty-overlay" id="penaltyOverlay">
+				<div class="pen-side home" id="penHomeDots"></div>
+				<div class="pen-score-center">
+					<span id="penHomeScore">0</span>
+					<span class="pen-score-sep">-</span>
+					<span id="penAwayScore">0</span>
+				</div>
+				<div class="pen-side away" id="penAwayDots"></div>
+				<div class="pen-winner" id="penWinner"></div>
+			</div>
+		</div>
+	</div>
+	<div class="status-indicator" id="statusIndicator"></div>
 
-    <script>
-        const THEMES = {
-            DeepTide: {
-                '--board-bg': 'linear-gradient(180deg, #05295d 0%, #004b8b 50%, #05295d 100%)',
-                '--score-bg': 'radial-gradient(circle, #5b84c1 0%, #004b8b 55%, #05295d 100%)'
-            }
-        };
+	<script>
+		const THEMES = {
+			DeepTide: {
+				'--board-bg': 'linear-gradient(180deg, #05295d 0%, #004b8b 50%, #05295d 100%)',
+				'--score-bg': 'radial-gradient(circle, #5b84c1 0%, #004b8b 55%, #05295d 100%)'
+			}
+		};
 
-        function applyTheme() {
-            const params = new URLSearchParams(window.location.search);
-            const themeName = params.get('boardStyleName') || 'DeepTide';
-            const theme = THEMES[themeName] || THEMES.DeepTide;
-            const root = document.documentElement;
-            for (const [prop, value] of Object.entries(theme)) root.style.setProperty(prop, value);
-        }
-        applyTheme();
+		function applyTheme() {
+			const params = new URLSearchParams(window.location.search);
+			const themeName = params.get('boardStyleName') || 'DeepTide';
+			const theme = THEMES[themeName] || THEMES.DeepTide;
+			const root = document.documentElement;
+			for (const [prop, value] of Object.entries(theme)) root.style.setProperty(prop, value);
+		}
+		applyTheme();
 
-        function getStreamKey() {
-            const params = new URLSearchParams(window.location.search);
-            if (params.get('key')) return params.get('key');
-            const pathParts = window.location.pathname.split('/');
-            const last = pathParts[pathParts.length - 1];
-            if (last && !last.includes('.')) return last;
-            return null;
-        }
-        const streamKey = getStreamKey();
+		function getStreamKey() {
+			const params = new URLSearchParams(window.location.search);
+			if (params.get('key')) return params.get('key');
+			const pathParts = window.location.pathname.split('/');
+			const last = pathParts[pathParts.length - 1];
+			if (last && !last.includes('.')) return last;
+			return null;
+		}
+		const streamKey = getStreamKey();
 
-        const elements = {
-            homeTeamName: document.getElementById('homeTeamName'),
-            awayTeamName: document.getElementById('awayTeamName'),
-            homeScore: document.getElementById('homeScore'),
-            awayScore: document.getElementById('awayScore'),
-            timer: document.getElementById('timer'),
-            timerBox: document.getElementById('timerBox'),
-            periodLabel: document.getElementById('periodLabel'),
-            homeYellowBars: [
-                document.getElementById('homeYellow0'),
-                document.getElementById('homeYellow1'),
-                document.getElementById('homeYellow2')
-            ],
-            homeRedBars: [
-                document.getElementById('homeRed0'),
-                document.getElementById('homeRed1'),
-                document.getElementById('homeRed2')
-            ],
-            awayYellowBars: [
-                document.getElementById('awayYellow0'),
-                document.getElementById('awayYellow1'),
-                document.getElementById('awayYellow2')
-            ],
-            awayRedBars: [
-                document.getElementById('awayRed0'),
-                document.getElementById('awayRed1'),
-                document.getElementById('awayRed2')
-            ],
-            statusIndicator: document.getElementById('statusIndicator'),
-            metallicStripeHome: document.getElementById('metallicStripeHome'),
-            metallicStripeAway: document.getElementById('metallicStripeAway'),
-            homeLogoCrest: document.getElementById('homeLogoCrest'),
-            awayLogoCrest: document.getElementById('awayLogoCrest'),
-            dividerLeft: document.querySelector('.divider-left'),
-            penaltyOverlay: document.getElementById('penaltyOverlay'),
-            penHomeDots: document.getElementById('penHomeDots'),
-            penAwayDots: document.getElementById('penAwayDots'),
-            penHomeScore: document.getElementById('penHomeScore'),
-            penAwayScore: document.getElementById('penAwayScore'),
-            penWinner: document.getElementById('penWinner')
-        };
+		const elements = {
+			homeTeamName: document.getElementById('homeTeamName'),
+			awayTeamName: document.getElementById('awayTeamName'),
+			homeScore: document.getElementById('homeScore'),
+			awayScore: document.getElementById('awayScore'),
+			timer: document.getElementById('timer'),
+			timerBox: document.getElementById('timerBox'),
+			periodLabel: document.getElementById('periodLabel'),
+			homeYellowBars: [
+				document.getElementById('homeYellow0'),
+				document.getElementById('homeYellow1'),
+				document.getElementById('homeYellow2')
+			],
+			homeRedBars: [
+				document.getElementById('homeRed0'),
+				document.getElementById('homeRed1'),
+				document.getElementById('homeRed2')
+			],
+			awayYellowBars: [
+				document.getElementById('awayYellow0'),
+				document.getElementById('awayYellow1'),
+				document.getElementById('awayYellow2')
+			],
+			awayRedBars: [
+				document.getElementById('awayRed0'),
+				document.getElementById('awayRed1'),
+				document.getElementById('awayRed2')
+			],
+			statusIndicator: document.getElementById('statusIndicator'),
+			metallicStripeHome: document.getElementById('metallicStripeHome'),
+			metallicStripeAway: document.getElementById('metallicStripeAway'),
+			homeLogoCrest: document.getElementById('homeLogoCrest'),
+			awayLogoCrest: document.getElementById('awayLogoCrest'),
+			dividerLeft: document.querySelector('.divider-left'),
+			penaltyOverlay: document.getElementById('penaltyOverlay'),
+			penHomeDots: document.getElementById('penHomeDots'),
+			penAwayDots: document.getElementById('penAwayDots'),
+			penHomeScore: document.getElementById('penHomeScore'),
+			penAwayScore: document.getElementById('penAwayScore'),
+			penWinner: document.getElementById('penWinner')
+		};
 
-        let previousState = { homeScore: 0, awayScore: 0, homeYellow: 0, homeRed: 0, awayYellow: 0, awayRed: 0 };
-        let currentState = null;
-        let timerInterval = null;
-        let animationPlayed = false;
-        let introComplete = false;   // true after intro animation finishes (colors revealed)
-        let cachedHomeLogoUrl = null;
-        let cachedAwayLogoUrl = null;
-        let cachedPenaltyKey = '';
+		let previousState = { homeScore: 0, awayScore: 0, homeYellow: 0, homeRed: 0, awayYellow: 0, awayRed: 0 };
+		let currentState = null;
+		let timerInterval = null;
+		let animationPlayed = false;
+		let introComplete = false;   // true after intro animation finishes (colors revealed)
+		let cachedHomeLogoUrl = null;
+		let cachedAwayLogoUrl = null;
+		let cachedPenaltyKey = '';
 
-        // FIXED: robust period label mapping — handles undefined, null, empty, numeric
-        const PERIOD_LABELS = {
-            '1H': '1ST HALF', '2H': '2ND HALF', 'OT1': 'OT 1', 'OT2': 'OT 2', 'PEN': 'PENALTIES'
-        };
+		// FIXED: robust period label mapping — handles undefined, null, empty, numeric
+		const PERIOD_LABELS = {
+			'1H': '1ST HALF', '2H': '2ND HALF', 'OT1': 'OT 1', 'OT2': 'OT 2', 'PEN': 'PENALTIES'
+		};
 
-        function getPeriodDisplay(period) {
-            if (!period || period === '' || period === 'undefined' || period === 'null') return '1ST HALF';
-            const label = PERIOD_LABELS[String(period).toUpperCase()];
-            return label || '1ST HALF';
-        }
+		function getPeriodDisplay(period) {
+			if (!period || period === '' || period === 'undefined' || period === 'null') return '1ST HALF';
+			const label = PERIOD_LABELS[String(period).toUpperCase()];
+			return label || '1ST HALF';
+		}
 
-        function renderLogoCrest(element, logoUrl) {
-            if (logoUrl) {
-                element.innerHTML = `<img src="${logoUrl}" alt="">`;
-            } else {
-                element.innerHTML = '';
-                element.classList.remove('visible');
-            }
-        }
+		function renderLogoCrest(element, logoUrl) {
+			if (logoUrl) {
+				element.innerHTML = `<img src="${logoUrl}" alt="">`;
+			} else {
+				element.innerHTML = '';
+				element.classList.remove('visible');
+			}
+		}
 
-        function computeCurrentTimer(state) {
-            if (!state) return 0;
-            let elapsed = state.elapsedSecondsAtPause || 0;
-            if (state.isTimerRunning && state.timerStartedAtUtc) {
-                const started = new Date(state.timerStartedAtUtc + 'Z').getTime();
-                elapsed += Math.floor((Date.now() - started) / 1000);
-            }
-            if (state.timerDirection === 'DOWN') return Math.max(0, (state.timerSetSeconds || 0) - elapsed);
-            return elapsed;
-        }
+		function computeCurrentTimer(state) {
+			if (!state) return 0;
+			let elapsed = state.elapsedSecondsAtPause || 0;
+			if (state.isTimerRunning && state.timerStartedAtUtc) {
+				const started = new Date(state.timerStartedAtUtc + 'Z').getTime();
+				elapsed += Math.floor((Date.now() - started) / 1000);
+			}
+			if (state.timerDirection === 'DOWN') return Math.max(0, (state.timerSetSeconds || 0) - elapsed);
+			return elapsed;
+		}
 
-        function formatTime(seconds) {
-            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-            const s = (seconds % 60).toString().padStart(2, '0');
-            return `${m}:${s}`;
-        }
+		function formatTime(seconds) {
+			const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+			const s = (seconds % 60).toString().padStart(2, '0');
+			return `${m}:${s}`;
+		}
 
-        function startLocalTimer() {
-            if (timerInterval) clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                if (currentState && currentState.isTimerRunning) {
-                    const secs = computeCurrentTimer(currentState);
-                    elements.timer.textContent = formatTime(secs);
-                    checkTimerExpired(secs);
-                }
-            }, 200);
-        }
+		function startLocalTimer() {
+			if (timerInterval) clearInterval(timerInterval);
+			timerInterval = setInterval(() => {
+				if (currentState && currentState.isTimerRunning) {
+					const secs = computeCurrentTimer(currentState);
+					elements.timer.textContent = formatTime(secs);
+					checkTimerExpired(secs);
+				}
+			}, 200);
+		}
 
-        function checkTimerExpired(secs) {
-            if (!currentState) return;
-            const period = currentState.currentPeriod || '1H';
-            const half = (currentState.halfLengthMinutes || 45) * 60;
+		function checkTimerExpired(secs) {
+			if (!currentState) return;
+			const period = currentState.currentPeriod || '1H';
+			const half = (currentState.halfLengthMinutes || 45) * 60;
 
-            // Yellow background only during 2nd Half when clock exceeds full regulation time
-            // Clock keeps ticking — shows how deep into stoppage time the ref is
-            if (period === '2H' && currentState.timerDirection !== 'DOWN' && secs >= half * 2) {
-                elements.timerBox.classList.add('period-expired');
-                elements.dividerLeft.classList.add('period-expired');
-            } else {
-                elements.timerBox.classList.remove('period-expired');
-                elements.dividerLeft.classList.remove('period-expired');
-            }
-        }
+			// Yellow background only during 2nd Half when clock exceeds full regulation time
+			// Clock keeps ticking — shows how deep into stoppage time the ref is
+			if (period === '2H' && currentState.timerDirection !== 'DOWN' && secs >= half * 2) {
+				elements.timerBox.classList.add('period-expired');
+				elements.dividerLeft.classList.add('period-expired');
+			} else {
+				elements.timerBox.classList.remove('period-expired');
+				elements.dividerLeft.classList.remove('period-expired');
+			}
+		}
 
-        function renderPenaltyOverlay(state) {
-            let homeKicks = [], awayKicks = [];
-            try { homeKicks = JSON.parse(state.homePenaltyKicks || '[]'); } catch(e) {}
-            try { awayKicks = JSON.parse(state.awayPenaltyKicks || '[]'); } catch(e) {}
+		function renderPenaltyOverlay(state) {
+			let homeKicks = [], awayKicks = [];
+			try { homeKicks = JSON.parse(state.homePenaltyKicks || '[]'); } catch(e) {}
+			try { awayKicks = JSON.parse(state.awayPenaltyKicks || '[]'); } catch(e) {}
 
-            const penKey = (state.homePenaltyKicks || '[]') + '|' + (state.awayPenaltyKicks || '[]');
-            const period = state.currentPeriod || '1H';
-            const hasPenalties = homeKicks.length > 0 || awayKicks.length > 0;
+			const penKey = (state.homePenaltyKicks || '[]') + '|' + (state.awayPenaltyKicks || '[]');
+			const period = state.currentPeriod || '1H';
+			const hasPenalties = homeKicks.length > 0 || awayKicks.length > 0;
 
-            // Show overlay only when period is PEN
-            if (period === 'PEN') {
-                elements.penaltyOverlay.classList.add('visible');
-            } else {
-                elements.penaltyOverlay.classList.remove('visible');
-                return;
-            }
+			// Show overlay only when period is PEN
+			if (period === 'PEN') {
+				elements.penaltyOverlay.classList.add('visible');
+			} else {
+				elements.penaltyOverlay.classList.remove('visible');
+				return;
+			}
 
-            // Skip DOM rebuild if data hasn't changed
-            if (penKey === cachedPenaltyKey) return;
-            cachedPenaltyKey = penKey;
+			// Skip DOM rebuild if data hasn't changed
+			if (penKey === cachedPenaltyKey) return;
+			cachedPenaltyKey = penKey;
 
-            const maxRounds = Math.max(5, homeKicks.length, awayKicks.length);
-            const homeGoals = homeKicks.filter(k => k === 'goal').length;
-            const awayGoals = awayKicks.filter(k => k === 'goal').length;
+			const maxRounds = Math.max(5, homeKicks.length, awayKicks.length);
+			const homeGoals = homeKicks.filter(k => k === 'goal').length;
+			const awayGoals = awayKicks.filter(k => k === 'goal').length;
 
-            elements.penHomeScore.textContent = homeGoals;
-            elements.penAwayScore.textContent = awayGoals;
+			elements.penHomeScore.textContent = homeGoals;
+			elements.penAwayScore.textContent = awayGoals;
 
-            // Render dots
-            elements.penHomeDots.innerHTML = buildDotHTML(homeKicks, maxRounds);
-            elements.penAwayDots.innerHTML = buildDotHTML(awayKicks, maxRounds);
+			// Render dots
+			elements.penHomeDots.innerHTML = buildDotHTML(homeKicks, maxRounds);
+			elements.penAwayDots.innerHTML = buildDotHTML(awayKicks, maxRounds);
 
-            // Winner check
-            const winner = checkPenaltyWinner(homeKicks, awayKicks);
-            if (winner) {
-                const name = winner === 'home'
-                    ? (state.homeTeamName || 'HOME')
-                    : (state.awayTeamName || 'AWAY');
-                elements.penWinner.textContent = `🏆 ${name} wins on penalties!`;
-                elements.penWinner.classList.add('visible');
-            } else {
-                elements.penWinner.classList.remove('visible');
-            }
-        }
+			// Winner check
+			const winner = checkPenaltyWinner(homeKicks, awayKicks);
+			if (winner) {
+				const name = winner === 'home'
+					? (state.homeTeamName || 'HOME')
+					: (state.awayTeamName || 'AWAY');
+				elements.penWinner.textContent = `🏆 ${name} wins on penalties!`;
+				elements.penWinner.classList.add('visible');
+			} else {
+				elements.penWinner.classList.remove('visible');
+			}
+		}
 
-        function buildDotHTML(kicks, maxRounds) {
-            let html = '';
-            for (let i = 0; i < maxRounds; i++) {
-                if (i < kicks.length) {
-                    html += kicks[i] === 'goal'
-                        ? '<div class="pen-dot goal">✓</div>'
-                        : '<div class="pen-dot miss">✗</div>';
-                } else {
-                    html += `<div class="pen-dot pending">${i + 1}</div>`;
-                }
-            }
-            return html;
-        }
+		function buildDotHTML(kicks, maxRounds) {
+			let html = '';
+			for (let i = 0; i < maxRounds; i++) {
+				if (i < kicks.length) {
+					html += kicks[i] === 'goal'
+						? '<div class="pen-dot goal">✓</div>'
+						: '<div class="pen-dot miss">✗</div>';
+				} else {
+					html += `<div class="pen-dot pending">${i + 1}</div>`;
+				}
+			}
+			return html;
+		}
 
-        function checkPenaltyWinner(homeKicks, awayKicks) {
-            const hg = homeKicks.filter(k => k === 'goal').length;
-            const ag = awayKicks.filter(k => k === 'goal').length;
-            const hl = homeKicks.length, al = awayKicks.length;
-            // Standard 5 rounds
-            if (hl <= 5 && al <= 5) {
-                const homeRemaining = 5 - hl, awayRemaining = 5 - al;
-                if (hl >= 1 && al >= 1 && ag > hg + homeRemaining) return 'away';
-                if (hl >= 1 && al >= 1 && hg > ag + awayRemaining) return 'home';
-                if (hl >= 5 && al >= 5 && hg !== ag) return hg > ag ? 'home' : 'away';
-            }
-            // Sudden death
-            if (hl > 5 && al > 5 && hl === al && hg !== ag) return hg > ag ? 'home' : 'away';
-            return null;
-        }
+		function checkPenaltyWinner(homeKicks, awayKicks) {
+			const hg = homeKicks.filter(k => k === 'goal').length;
+			const ag = awayKicks.filter(k => k === 'goal').length;
+			const hl = homeKicks.length, al = awayKicks.length;
+			// Standard 5 rounds
+			if (hl <= 5 && al <= 5) {
+				const homeRemaining = 5 - hl, awayRemaining = 5 - al;
+				if (hl >= 1 && al >= 1 && ag > hg + homeRemaining) return 'away';
+				if (hl >= 1 && al >= 1 && hg > ag + awayRemaining) return 'home';
+				if (hl >= 5 && al >= 5 && hg !== ag) return hg > ag ? 'home' : 'away';
+			}
+			// Sudden death
+			if (hl > 5 && al > 5 && hl === al && hg !== ag) return hg > ag ? 'home' : 'away';
+			return null;
+		}
 
-        function adjustTeamNameSizes() {
-            const maxWidth = 180, baseFontSize = 18, minFontSize = 10;
-            elements.homeTeamName.style.fontSize = baseFontSize + 'px';
-            elements.awayTeamName.style.fontSize = baseFontSize + 'px';
-            const maxTextWidth = Math.max(elements.homeTeamName.scrollWidth, elements.awayTeamName.scrollWidth);
-            let fontSize = baseFontSize;
-            if (maxTextWidth > maxWidth) fontSize = Math.max(minFontSize, (baseFontSize * maxWidth) / maxTextWidth);
-            elements.homeTeamName.style.fontSize = fontSize + 'px';
-            elements.awayTeamName.style.fontSize = fontSize + 'px';
-        }
+		function adjustTeamNameSizes() {
+			const maxWidth = 180, baseFontSize = 18, minFontSize = 10;
+			elements.homeTeamName.style.fontSize = baseFontSize + 'px';
+			elements.awayTeamName.style.fontSize = baseFontSize + 'px';
+			const maxTextWidth = Math.max(elements.homeTeamName.scrollWidth, elements.awayTeamName.scrollWidth);
+			let fontSize = baseFontSize;
+			if (maxTextWidth > maxWidth) fontSize = Math.max(minFontSize, (baseFontSize * maxWidth) / maxTextWidth);
+			elements.homeTeamName.style.fontSize = fontSize + 'px';
+			elements.awayTeamName.style.fontSize = fontSize + 'px';
+		}
 
-        function updateScoreboard(state) {
-            currentState = state;
-            elements.homeTeamName.textContent = state.homeTeamName || 'HOME';
-            elements.awayTeamName.textContent = state.awayTeamName || 'OPPONENT';
-            adjustTeamNameSizes();
+		function updateScoreboard(state) {
+			currentState = state;
+			elements.homeTeamName.textContent = state.homeTeamName || 'HOME';
+			elements.awayTeamName.textContent = state.awayTeamName || 'OPPONENT';
+			adjustTeamNameSizes();
 
-            updateScore('homeScore', state.homeScore, previousState.homeScore);
-            updateScore('awayScore', state.awayScore, previousState.awayScore);
+			updateScore('homeScore', state.homeScore, previousState.homeScore);
+			updateScore('awayScore', state.awayScore, previousState.awayScore);
 
-            const secs = computeCurrentTimer(state);
-            elements.timer.textContent = formatTime(secs);
-            if (state.isTimerRunning) { elements.timer.classList.add('running'); if (!timerInterval) startLocalTimer(); }
-            else { elements.timer.classList.remove('running'); if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } }
+			const secs = computeCurrentTimer(state);
+			elements.timer.textContent = formatTime(secs);
+			if (state.isTimerRunning) { elements.timer.classList.add('running'); if (!timerInterval) startLocalTimer(); }
+			else { elements.timer.classList.remove('running'); if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } }
 
-            checkTimerExpired(secs);
+			checkTimerExpired(secs);
 
-            // FIXED: period label — use robust mapping
-            elements.periodLabel.textContent = getPeriodDisplay(state.currentPeriod);
+			// FIXED: period label — use robust mapping
+			elements.periodLabel.textContent = getPeriodDisplay(state.currentPeriod);
 
-            // Penalty shootout overlay
-            renderPenaltyOverlay(state);
+			// Penalty shootout overlay
+			renderPenaltyOverlay(state);
 
-            updateCardBars(elements.homeYellowBars, state.homeYellowCards || 0);
-            updateCardBars(elements.homeRedBars, state.homeRedCards || 0);
-            updateCardBars(elements.awayYellowBars, state.awayYellowCards || 0);
-            updateCardBars(elements.awayRedBars, state.awayRedCards || 0);
+			updateCardBars(elements.homeYellowBars, state.homeYellowCards || 0);
+			updateCardBars(elements.homeRedBars, state.homeRedCards || 0);
+			updateCardBars(elements.awayYellowBars, state.awayYellowCards || 0);
+			updateCardBars(elements.awayRedBars, state.awayRedCards || 0);
 
-            applyJerseyColor(elements.metallicStripeHome, state.homeJerseyColor);
-            applyJerseyColor(elements.metallicStripeAway, state.awayJerseyColor);
+			applyJerseyColor(elements.metallicStripeHome, state.homeJerseyColor);
+			applyJerseyColor(elements.metallicStripeAway, state.awayJerseyColor);
 
-            // Apply number colors on every update — but only after intro animation is done
-            // (intro has a timed color reveal; we don't want to skip that effect)
-            if (introComplete) {
-                elements.homeTeamName.style.color = state.homeNumberColor || '#ffffff';
-                elements.awayTeamName.style.color = state.awayNumberColor || '#003366';
-            }
+			// Apply number colors on every update — but only after intro animation is done
+			// (intro has a timed color reveal; we don't want to skip that effect)
+			if (introComplete) {
+				elements.homeTeamName.style.color = state.homeNumberColor || '#ffffff';
+				elements.awayTeamName.style.color = state.awayNumberColor || '#003366';
+			}
 
-            // Logos: handled separately via LogosUpdated SignalR event (not in game state broadcasts)
+			// Logos: handled separately via LogosUpdated SignalR event (not in game state broadcasts)
 
-            previousState = {
-                homeScore: state.homeScore, awayScore: state.awayScore,
-                homeYellow: state.homeYellowCards || 0, homeRed: state.homeRedCards || 0,
-                awayYellow: state.awayYellowCards || 0, awayRed: state.awayRedCards || 0
-            };
+			previousState = {
+				homeScore: state.homeScore, awayScore: state.awayScore,
+				homeYellow: state.homeYellowCards || 0, homeRed: state.homeRedCards || 0,
+				awayYellow: state.awayYellowCards || 0, awayRed: state.awayRedCards || 0
+			};
 
-            // Intro animation
-            if (!animationPlayed) {
-                animationPlayed = true;
-                setTimeout(() => {
-                    elements.metallicStripeHome.style.background = makeGradient(state.homeJerseyColor);
-                    elements.metallicStripeAway.style.background = makeGradient(state.awayJerseyColor);
-                    setTimeout(() => {
-                        elements.homeTeamName.classList.add('swell');
-                        elements.awayTeamName.classList.add('swell');
-                        setTimeout(() => {
-                            elements.homeTeamName.style.color = state.homeNumberColor || '#ffffff';
-                            elements.awayTeamName.style.color = state.awayNumberColor || '#003366';
-                            introComplete = true;  // Now applyState will handle color updates directly
-                            // Logos appear last — full opacity
-                            setTimeout(() => {
-                                elements.homeLogoCrest.classList.add('visible');
-                                elements.awayLogoCrest.classList.add('visible');
-                            }, 500);
-                        }, 1500);
-                    }, 500);
-                }, 2000);
-            } else {
-                if (cachedHomeLogoUrl) elements.homeLogoCrest.classList.add('visible');
-                if (cachedAwayLogoUrl) elements.awayLogoCrest.classList.add('visible');
-            }
-        }
+			// Intro animation
+			if (!animationPlayed) {
+				animationPlayed = true;
+				setTimeout(() => {
+					elements.metallicStripeHome.style.background = makeGradient(state.homeJerseyColor);
+					elements.metallicStripeAway.style.background = makeGradient(state.awayJerseyColor);
+					setTimeout(() => {
+						elements.homeTeamName.classList.add('swell');
+						elements.awayTeamName.classList.add('swell');
+						setTimeout(() => {
+							elements.homeTeamName.style.color = state.homeNumberColor || '#ffffff';
+							elements.awayTeamName.style.color = state.awayNumberColor || '#003366';
+							introComplete = true;  // Now applyState will handle color updates directly
+							// Logos appear last — full opacity
+							setTimeout(() => {
+								elements.homeLogoCrest.classList.add('visible');
+								elements.awayLogoCrest.classList.add('visible');
+							}, 500);
+						}, 1500);
+					}, 500);
+				}, 2000);
+			} else {
+				if (cachedHomeLogoUrl) elements.homeLogoCrest.classList.add('visible');
+				if (cachedAwayLogoUrl) elements.awayLogoCrest.classList.add('visible');
+			}
+		}
 
-        function makeGradient(color) {
-            return `linear-gradient(180deg, ${darken(color, 30)} 0%, ${color} 45%, ${darken(color, 30)} 100%)`;
-        }
-        function darken(hex, percent) {
-            if (!hex) return '#4f4f4f';
-            hex = hex.replace('#', '');
-            const r = Math.max(0, parseInt(hex.substr(0,2), 16) - percent);
-            const g = Math.max(0, parseInt(hex.substr(2,2), 16) - percent);
-            const b = Math.max(0, parseInt(hex.substr(4,2), 16) - percent);
-            return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
-        }
-        function applyJerseyColor(element, color) {
-            if (!color) return;
-            element.style.background = makeGradient(color);
-        }
-        function updateScore(elementId, newScore, oldScore) {
-            const element = elements[elementId];
-            element.textContent = newScore || 0;
-            if (newScore !== oldScore) {
-                element.classList.remove('updated');
-                void element.offsetWidth;
-                element.classList.add('updated');
-            }
-        }
-        function updateCardBars(bars, count) {
-            const n = Math.min(count, bars.length);
-            for (let i = 0; i < bars.length; i++) {
-                if (i < n) {
-                    if (!bars[i].classList.contains('visible')) {
-                        bars[i].classList.add('visible', 'pop');
-                    }
-                } else {
-                    bars[i].classList.remove('visible', 'pop');
-                }
-            }
-        }
-        function updateConnectionStatus(connected) {
-            if (connected) elements.statusIndicator.classList.remove('disconnected');
-            else elements.statusIndicator.classList.add('disconnected');
-        }
+		function makeGradient(color) {
+			return `linear-gradient(180deg, ${darken(color, 30)} 0%, ${color} 45%, ${darken(color, 30)} 100%)`;
+		}
+		function darken(hex, percent) {
+			if (!hex) return '#4f4f4f';
+			hex = hex.replace('#', '');
+			const r = Math.max(0, parseInt(hex.substr(0,2), 16) - percent);
+			const g = Math.max(0, parseInt(hex.substr(2,2), 16) - percent);
+			const b = Math.max(0, parseInt(hex.substr(4,2), 16) - percent);
+			return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+		}
+		function applyJerseyColor(element, color) {
+			if (!color) return;
+			element.style.background = makeGradient(color);
+		}
+		function updateScore(elementId, newScore, oldScore) {
+			const element = elements[elementId];
+			element.textContent = newScore || 0;
+			if (newScore !== oldScore) {
+				element.classList.remove('updated');
+				void element.offsetWidth;
+				element.classList.add('updated');
+			}
+		}
+		function updateCardBars(bars, count) {
+			const n = Math.min(count, bars.length);
+			for (let i = 0; i < bars.length; i++) {
+				if (i < n) {
+					if (!bars[i].classList.contains('visible')) {
+						bars[i].classList.add('visible', 'pop');
+					}
+				} else {
+					bars[i].classList.remove('visible', 'pop');
+				}
+			}
+		}
+		function updateConnectionStatus(connected) {
+			if (connected) elements.statusIndicator.classList.remove('disconnected');
+			else elements.statusIndicator.classList.add('disconnected');
+		}
 
-        const connection = new signalR.HubConnectionBuilder()
-            .withUrl(`${window.location.origin}/hubs/game`)
-            .withAutomaticReconnect([0, 1000, 2000, 5000, 10000, 30000])
-            .build();
+		const connection = new signalR.HubConnectionBuilder()
+			.withUrl(`${window.location.origin}/hubs/game`)
+			.withAutomaticReconnect([0, 1000, 2000, 5000, 10000, 30000])
+			.build();
 
-        let lastStateVersion = -1;
+		let lastStateVersion = -1;
 
-        connection.on("GameStateUpdated", (state) => {
-            updateScoreboard(state);
-        });
-        // Track cache version so polls can skip unchanged state
-        connection.on("StateVersion", (version) => {
-            lastStateVersion = version;
-        });
-        // Logos arrive on a separate channel — only on join/reconnect and appearance changes
-        connection.on("LogosUpdated", (homeLogoUrl, awayLogoUrl) => {
-            cachedHomeLogoUrl = homeLogoUrl;
-            cachedAwayLogoUrl = awayLogoUrl;
-            renderLogoCrest(elements.homeLogoCrest, homeLogoUrl);
-            renderLogoCrest(elements.awayLogoCrest, awayLogoUrl);
-            if (homeLogoUrl) elements.homeLogoCrest.classList.add('visible');
-            if (awayLogoUrl) elements.awayLogoCrest.classList.add('visible');
-        });
-        connection.onreconnecting(() => updateConnectionStatus(false));
-        connection.onreconnected(() => { updateConnectionStatus(true); if (streamKey) connection.invoke("JoinStream", streamKey); });
-        connection.onclose(() => updateConnectionStatus(false));
+		connection.on("GameStateUpdated", (state) => {
+			updateScoreboard(state);
+		});
+		// Track cache version so polls can skip unchanged state
+		connection.on("StateVersion", (version) => {
+			lastStateVersion = version;
+		});
+		// Logos arrive on a separate channel — only on join/reconnect and appearance changes
+		connection.on("LogosUpdated", (homeLogoUrl, awayLogoUrl) => {
+			cachedHomeLogoUrl = homeLogoUrl;
+			cachedAwayLogoUrl = awayLogoUrl;
+			renderLogoCrest(elements.homeLogoCrest, homeLogoUrl);
+			renderLogoCrest(elements.awayLogoCrest, awayLogoUrl);
+			if (homeLogoUrl) elements.homeLogoCrest.classList.add('visible');
+			if (awayLogoUrl) elements.awayLogoCrest.classList.add('visible');
+		});
+		connection.onreconnecting(() => updateConnectionStatus(false));
+		connection.onreconnected(() => { updateConnectionStatus(true); if (streamKey) connection.invoke("JoinStream", streamKey); });
+		connection.onclose(() => updateConnectionStatus(false));
 
-        async function startConnection() {
-            try {
-                await connection.start();
-                updateConnectionStatus(true);
-                if (streamKey) await connection.invoke("JoinStream", streamKey);
-            } catch (err) { updateConnectionStatus(false); setTimeout(startConnection, 3000); }
-        }
-        startConnection();
+		async function startConnection() {
+			try {
+				await connection.start();
+				updateConnectionStatus(true);
+				if (streamKey) await connection.invoke("JoinStream", streamKey);
+			} catch (err) { updateConnectionStatus(false); setTimeout(startConnection, 3000); }
+		}
+		startConnection();
 
-        // Safety-net poll — catches missed broadcasts (e.g., reconnection edge cases).
-        // Reads from in-memory cache on server (zero DB queries).
-        // Sends lastStateVersion so server returns nothing if state unchanged (zero bandwidth).
-        setInterval(() => {
-            if (streamKey && connection.state === 'Connected') {
-                connection.invoke("GetState", streamKey, lastStateVersion).catch(() => {});
-            }
-        }, 30000);
+		// Safety-net poll — catches missed broadcasts (e.g., reconnection edge cases).
+		// Reads from in-memory cache on server (zero DB queries).
+		// Sends lastStateVersion so server returns nothing if state unchanged (zero bandwidth).
+		setInterval(() => {
+			if (streamKey && connection.state === 'Connected') {
+				connection.invoke("GetState", streamKey, lastStateVersion).catch(() => {});
+			}
+		}, 30000);
 
-        window.addEventListener('load', adjustTeamNameSizes);
-        window.addEventListener('resize', adjustTeamNameSizes);
-    </script>
+		window.addEventListener('load', adjustTeamNameSizes);
+		window.addEventListener('resize', adjustTeamNameSizes);
+	</script>
 </body>
 </html>
