@@ -23,13 +23,12 @@ Scoreboard.sln
 │   │           ├── pregame.html
 │   │           ├── scoreboard.html
 │   │           ├── halftime.html
-│   │           └── fulltime.html
-│   ├── Scoreboard.Web/          # Blazor components (future MAUI reuse)
+│   │           ├── fulltime.html
+│   │           └── penalties.html
 │   └── Scoreboard.Database/     # SQL scripts (one per table, 3NF)
 │       ├── Tables/
 │       └── SeedData/
 ├── .github/workflows/          # CI/CD pipeline
-└── docs/
 ```
 
 ## Key Design Decisions
@@ -39,6 +38,8 @@ Scoreboard.sln
 - **Multi-tenancy**: Each streamer has a `StreamKey` (GUID). Overlays subscribe to a SignalR group by StreamKey. No stream crossing.
 - **Security**: OBS overlays use StreamKey in URL + optional `X-Stream-Token` header. Controller uses JWT authentication. Streamers can be blocked instantly via `IsBlocked` flag.
 - **Sport-agnostic**: Database designed with `Sport` table. Soccer is sport #1. Baseball, Football, etc. can be added without schema changes.
+- **Penalty Shootout**: Dedicated overlay tracks kicks per team with goal/miss dots, automatic winner detection (standard 5 rounds + sudden death), and pop-in animations.
+- **Team Logos**: Oversized 80px crests overflow the card top edge on all overlays. Logos are sent via a separate `LogosUpdated` SignalR event (not in the main state DTO) to avoid sending base64 data on every broadcast.
 
 ## Setup Instructions
 
@@ -172,6 +173,7 @@ In OBS Studio, add a Browser Source for each overlay:
 2. **Scoreboard**: `https://your-app.azurewebsites.net/overlay/scoreboard.html?key=YOUR_STREAM_KEY`
 3. **Half Time**: `https://your-app.azurewebsites.net/overlay/halftime.html?key=YOUR_STREAM_KEY`
 4. **Full Time**: `https://your-app.azurewebsites.net/overlay/fulltime.html?key=YOUR_STREAM_KEY`
+5. **Penalties**: `https://your-app.azurewebsites.net/overlay/penalties.html?key=YOUR_STREAM_KEY`
 
 Set width to 1920 and height to 1080. The overlays have transparent backgrounds.
 
@@ -182,5 +184,5 @@ Optional: Add custom header `X-Stream-Token: YOUR_STREAM_TOKEN` in OBS Browser S
 - [ ] .NET MAUI Hybrid iOS app (shared Blazor components)
 - [ ] Baseball sport support
 - [ ] Football sport support
-- [ ] Team logo/crest upload
+- [x] Team logo/crest upload
 - [ ] Game history & statistics
