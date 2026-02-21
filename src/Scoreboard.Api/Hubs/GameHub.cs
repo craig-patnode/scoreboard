@@ -14,11 +14,24 @@ public class GameHub : Hub
 {
 	private readonly GameService _gameService;
 	private readonly GameStateCache _cache;
+	private readonly ILogger<GameHub> _logger;
 
-	public GameHub(GameService gameService, GameStateCache cache)
+	public GameHub(GameService gameService, GameStateCache cache, ILogger<GameHub> logger)
 	{
 		_gameService = gameService;
 		_cache = cache;
+		_logger = logger;
+	}
+
+	/// <summary>
+	/// Validate that a stream key is a well-formed GUID to prevent injection/abuse.
+	/// </summary>
+	private static bool IsValidStreamKey(string streamKey, out Guid parsed)
+	{
+		parsed = Guid.Empty;
+		if (string.IsNullOrWhiteSpace(streamKey) || streamKey.Length > 50)
+			return false;
+		return Guid.TryParse(streamKey, out parsed);
 	}
 
 	/// <summary>
@@ -27,21 +40,24 @@ public class GameHub : Hub
 	/// </summary>
 	public async Task JoinStream(string streamKey)
 	{
+		if (!IsValidStreamKey(streamKey, out var key))
+		{
+			_logger.LogWarning("JoinStream called with invalid streamKey from {ConnectionId}", Context.ConnectionId);
+			return;
+		}
+
 		await Groups.AddToGroupAsync(Context.ConnectionId, streamKey);
 
-		if (Guid.TryParse(streamKey, out var key))
+		var state = await _gameService.GetGameStateByStreamKeyAsync(key);
+		if (state != null)
 		{
-			var state = await _gameService.GetGameStateByStreamKeyAsync(key);
-			if (state != null)
-			{
-				_cache.Set(streamKey, state);
-				await Clients.Caller.SendAsync("GameStateUpdated", state);
-			}
-
-			// Logos sent separately — only on join/reconnect (never on polls)
-			var (homeLogo, awayLogo) = await _gameService.GetLogosByStreamKeyAsync(key);
-			await Clients.Caller.SendAsync("LogosUpdated", homeLogo, awayLogo);
+			_cache.Set(streamKey, state);
+			await Clients.Caller.SendAsync("GameStateUpdated", state);
 		}
+
+		// Logos sent separately — only on join/reconnect (never on polls)
+		var (homeLogo, awayLogo) = await _gameService.GetLogosByStreamKeyAsync(key);
+		await Clients.Caller.SendAsync("LogosUpdated", homeLogo, awayLogo);
 	}
 
 	/// <summary>
@@ -49,6 +65,7 @@ public class GameHub : Hub
 	/// </summary>
 	public async Task LeaveStream(string streamKey)
 	{
+		if (!IsValidStreamKey(streamKey, out _)) return;
 		await Groups.RemoveFromGroupAsync(Context.ConnectionId, streamKey);
 	}
 
@@ -59,6 +76,8 @@ public class GameHub : Hub
 	/// </summary>
 	public async Task GetState(string streamKey, long lastVersion = -1)
 	{
+		if (!IsValidStreamKey(streamKey, out var key)) return;
+
 		var cached = _cache.Get(streamKey);
 		if (cached != null)
 		{
@@ -69,18 +88,15 @@ public class GameHub : Hub
 		}
 
 		// Cache miss (first request before any broadcast) — fall back to DB
-		if (Guid.TryParse(streamKey, out var key))
+		var state = await _gameService.GetGameStateByStreamKeyAsync(key);
+		if (state != null)
 		{
-			var state = await _gameService.GetGameStateByStreamKeyAsync(key);
-			if (state != null)
-			{
-				var version = _cache.Set(streamKey, state);
-				await Clients.Caller.SendAsync("GameStateUpdated", state);
-				await Clients.Caller.SendAsync("StateVersion", version);
-			}
-
-			var (homeLogo, awayLogo) = await _gameService.GetLogosByStreamKeyAsync(key);
-			await Clients.Caller.SendAsync("LogosUpdated", homeLogo, awayLogo);
+			var version = _cache.Set(streamKey, state);
+			await Clients.Caller.SendAsync("GameStateUpdated", state);
+			await Clients.Caller.SendAsync("StateVersion", version);
 		}
+
+		var (homeLogo, awayLogo) = await _gameService.GetLogosByStreamKeyAsync(key);
+		await Clients.Caller.SendAsync("LogosUpdated", homeLogo, awayLogo);
 	}
 }

@@ -23,11 +23,18 @@ public class GameController : ControllerBase
 		_cache = cache;
 	}
 
-	private int GetStreamerId() =>
-		int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+	private int GetStreamerId()
+	{
+		var claim = User.FindFirstValue(ClaimTypes.NameIdentifier)
+			?? throw new UnauthorizedAccessException("Missing streamer identity claim.");
+		return int.Parse(claim);
+	}
 
-	private string GetStreamKey() =>
-		User.FindFirstValue("StreamKey") ?? "";
+	private string GetStreamKey()
+	{
+		return User.FindFirstValue("StreamKey")
+			?? throw new UnauthorizedAccessException("Missing stream key claim.");
+	}
 
 
 	/// <summary>

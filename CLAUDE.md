@@ -30,6 +30,18 @@
   - Azure Key Vault
   - Local environment variables (never committed)
 
+### Secure Coding Practices
+- **Input Validation**: All DTOs must have `[Required]`, `[StringLength]`, `[Range]`, `[EmailAddress]` etc. annotations. Validate `ModelState.IsValid` in controllers. Never trust client input.
+- **Output Encoding**: Use `textContent` for rendering text in the DOM, never `innerHTML` with user-controlled data. If `innerHTML` is necessary, sanitize first or use `createElement`/`appendChild`.
+- **Authentication**: Every controller and SignalR hub must have explicit `[Authorize]` or `[AllowAnonymous]` attributes — never leave authorization implicit.
+- **Error Handling**: Never return `ex.Message` or `InnerException` details to clients. Log full exceptions server-side with `ILogger`, return generic messages to users.
+- **CORS**: Never use `AllowAnyOrigin()` or `SetIsOriginAllowed(_ => true)` in production. Always whitelist specific origins.
+- **Security Headers**: All responses must include `X-Content-Type-Options`, `X-Frame-Options`, `Strict-Transport-Security`, and `Referrer-Policy` headers.
+- **Rate Limiting**: Authentication endpoints (login, signup, coupon validation) must have rate limiting to prevent brute force attacks.
+- **JWT Best Practices**: Short-lived tokens (1-2 hours), never include PII (email) in claims, never hardcode fallback secrets.
+- **File Uploads**: Validate MIME type (whitelist `data:image/png`, `data:image/jpeg`, `data:image/webp` only), enforce size limits, never trust client-provided content type.
+- **Refer to `SECURITY_AUDIT.md`** for the full list of known findings and remediation guidance.
+
 ### Git Workflow & Pull Requests
 - **I handle all git operations** - commits, pushes, and PR creation
 - **Branch naming convention**: Always create branches under `users/craigp/<title_summary_of_pr>`
@@ -41,7 +53,8 @@
   - After the existing PR is merged: switch to `main`, pull latest, then create the new feature branch from `main`
   - If a PR has merge conflicts: switch to `main`, pull, then merge `main` into the feature branch to resolve
 - **Never edit files on a stale branch** — always create the new feature branch first, then make changes
-  - Switch to `main` and pull: `git checkout main && git pull origin main`
+  - If changes were already made on a stale branch: `git stash --include-untracked -m "description"`, then switch to main, pull, create new branch, and `git stash pop`
+  - If no changes yet: switch to `main` and pull: `git checkout main && git pull origin main`
   - Create new branch: `git checkout -b users/craigp/<branch_name>`
   - Only then start editing files — this avoids having to stage/unstage changes on old branches
 - **Before creating PR**: Always pull from `main` first to ensure branch is up to date

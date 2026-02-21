@@ -161,11 +161,14 @@
 
 		function renderLogo(elementId, logoUrl) {
 			const el = document.getElementById(elementId);
+			el.textContent = '';
 			if (logoUrl) {
-				el.innerHTML = `<img src="${logoUrl}" alt="">`;
+				const img = document.createElement('img');
+				img.src = logoUrl;
+				img.alt = '';
+				el.appendChild(img);
 				el.classList.add('visible');
 			} else {
-				el.innerHTML = '';
 				el.classList.remove('visible');
 			}
 		}

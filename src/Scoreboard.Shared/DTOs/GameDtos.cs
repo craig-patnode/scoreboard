@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Scoreboard.Shared.Enums;
 
 namespace Scoreboard.Shared.DTOs;
@@ -86,6 +87,7 @@ public class GameStateDto
 /// </summary>
 public class UpdateScoreRequest
 {
+	[Range(0, 999)]
 	public int Score { get; set; }
 }
 
@@ -94,6 +96,7 @@ public class UpdateScoreRequest
 /// </summary>
 public class UpdateCardsRequest
 {
+	[Range(0, 20)]
 	public int Count { get; set; }
 }
 
@@ -102,6 +105,7 @@ public class UpdateCardsRequest
 /// </summary>
 public class SetTimerRequest
 {
+	[Range(0, 36000)]
 	public int Seconds { get; set; }
 }
 
@@ -110,8 +114,12 @@ public class SetTimerRequest
 /// </summary>
 public class SetPeriodRequest
 {
+	[Required]
+	[StringLength(5)]
 	public string CurrentPeriod { get; set; } = "1H";
+	[Range(1, 120)]
 	public int? HalfLengthMinutes { get; set; }
+	[Range(1, 60)]
 	public int? OtLengthMinutes { get; set; }
 }
 
@@ -128,6 +136,8 @@ public class SetTimerModeRequest
 /// </summary>
 public class UpdateTeamNameRequest
 {
+	[Required]
+	[StringLength(50, MinimumLength = 1)]
 	public string Name { get; set; } = string.Empty;
 }
 
@@ -136,8 +146,11 @@ public class UpdateTeamNameRequest
 /// </summary>
 public class UpdateTeamAppearanceRequest
 {
+	[StringLength(9)]
 	public string? JerseyColor { get; set; }
+	[StringLength(9)]
 	public string? NumberColor { get; set; }
+	[StringLength(2_000_000)]
 	public string? LogoData { get; set; }  // Base64 data URI (e.g., "data:image/png;base64,...")
 }
 
@@ -146,10 +159,20 @@ public class UpdateTeamAppearanceRequest
 /// </summary>
 public class SignUpRequest
 {
+	[Required]
+	[StringLength(50, MinimumLength = 1)]
 	public string DisplayName { get; set; } = string.Empty;
+	[Required]
+	[EmailAddress]
+	[StringLength(254)]
 	public string EmailAddress { get; set; } = string.Empty;
+	[Required]
+	[StringLength(128, MinimumLength = 8)]
 	public string Password { get; set; } = string.Empty;
+	[Required]
+	[StringLength(20)]
 	public string PlanCode { get; set; } = "MONTHLY";
+	[StringLength(50)]
 	public string? CouponCode { get; set; }
 }
 
@@ -158,7 +181,12 @@ public class SignUpRequest
 /// </summary>
 public class LoginRequest
 {
+	[Required]
+	[EmailAddress]
+	[StringLength(254)]
 	public string EmailAddress { get; set; } = string.Empty;
+	[Required]
+	[StringLength(128)]
 	public string Password { get; set; } = string.Empty;
 }
 
@@ -182,23 +210,32 @@ public class CreateGameRequest
 {
 	public int? HomeTeamId { get; set; }
 	public int? AwayTeamId { get; set; }
+	[StringLength(50)]
 	public string? HomeTeamName { get; set; }
+	[StringLength(50)]
 	public string? AwayTeamName { get; set; }
+	[StringLength(100)]
 	public string? Venue { get; set; }
 }
 
 public class RecordPenaltyRequest
 {
 	/// <summary>"home" or "away"</summary>
+	[Required]
+	[RegularExpression("^(home|away)$", ErrorMessage = "Team must be 'home' or 'away'.")]
 	public string Team { get; set; } = "home";
 
 	/// <summary>"goal" or "miss"</summary>
+	[Required]
+	[RegularExpression("^(goal|miss)$", ErrorMessage = "Result must be 'goal' or 'miss'.")]
 	public string Result { get; set; } = "goal";
 }
 
 public class UndoPenaltyRequest
 {
 	/// <summary>"home" or "away"</summary>
+	[Required]
+	[RegularExpression("^(home|away)$", ErrorMessage = "Team must be 'home' or 'away'.")]
 	public string Team { get; set; } = "home";
 }
 

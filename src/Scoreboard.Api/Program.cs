@@ -1,5 +1,7 @@
 using System.Text;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scoreboard.Api.Data;
@@ -17,8 +19,9 @@ builder.Services.AddScoped<GameService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddSingleton<GameStateCache>();
 
-// Auth
-var jwtKey = builder.Configuration["Jwt:Key"] ?? "ScoreboardDefaultSecretKeyThatShouldBeChanged123!";
+// Auth — C1: throw if JWT key is not configured instead of using hardcoded fallback
+var jwtKey = builder.Configuration["Jwt:Key"]
+	?? throw new InvalidOperationException("Jwt:Key must be configured. Set it via environment variable or Azure Key Vault.");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 	.AddJwtBearer(options =>
 	{
@@ -57,30 +60,86 @@ builder.Services.AddSignalR();
 // Controllers
 builder.Services.AddControllers();
 
-// CORS - allow overlay pages and controller
+// CORS — C3: use configuration-based origins instead of AllowAll
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+	?? (builder.Environment.IsDevelopment()
+		? new[] { "https://localhost:5001", "https://localhost:7001", "http://localhost:5000" }
+		: Array.Empty<string>());
+
 builder.Services.AddCors(options =>
 {
-	options.AddPolicy("AllowAll", policy =>
+	options.AddPolicy("Default", policy =>
 	{
-		policy.AllowAnyOrigin()
-			  .AllowAnyMethod()
-			  .AllowAnyHeader();
+		if (builder.Environment.IsDevelopment() && allowedOrigins.Length == 0)
+		{
+			// Dev fallback: allow same-origin only (static files served from same host)
+			policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+		}
+		else
+		{
+			policy.WithOrigins(allowedOrigins)
+				  .AllowAnyMethod()
+				  .AllowAnyHeader();
+		}
 	});
 
 	options.AddPolicy("SignalR", policy =>
 	{
-		policy.SetIsOriginAllowed(_ => true)
-			  .AllowAnyMethod()
-			  .AllowAnyHeader()
-			  .AllowCredentials();
+		if (builder.Environment.IsDevelopment())
+		{
+			policy.SetIsOriginAllowed(_ => true)
+				  .AllowAnyMethod()
+				  .AllowAnyHeader()
+				  .AllowCredentials();
+		}
+		else
+		{
+			policy.WithOrigins(allowedOrigins)
+				  .AllowAnyMethod()
+				  .AllowAnyHeader()
+				  .AllowCredentials();
+		}
 	});
 });
 
-// Swagger for dev
+// H1: Rate limiting on auth endpoints
+builder.Services.AddRateLimiter(options =>
+{
+	options.AddFixedWindowLimiter("auth", limiter =>
+	{
+		limiter.PermitLimit = 10;
+		limiter.Window = TimeSpan.FromMinutes(1);
+		limiter.QueueLimit = 0;
+	});
+	options.OnRejected = async (context, cancellationToken) =>
+	{
+		context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+		await context.HttpContext.Response.WriteAsJsonAsync(
+			new { error = "Too many requests. Please try again later." }, cancellationToken);
+	};
+});
+
+// Swagger for dev — L1: explicitly guard with configuration flag
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+// H2: Security headers
+app.Use(async (context, next) =>
+{
+	context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+	context.Response.Headers["X-Frame-Options"] = "DENY";
+	context.Response.Headers["X-XSS-Protection"] = "1; mode=block";
+	context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+	if (!context.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment())
+	{
+		context.Response.Headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";
+	}
+	// L4: Request ID for log correlation
+	context.Response.Headers["X-Request-ID"] = context.TraceIdentifier;
+	await next();
+});
 
 // Global exception handler — returns user-friendly JSON for all unhandled exceptions
 app.UseExceptionHandler(errorApp =>
@@ -104,7 +163,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors("AllowAll");
+app.UseCors("Default");
+app.UseRateLimiter();
 
 // WebSockets — required for reliable SignalR WebSocket transport
 app.UseWebSockets();
