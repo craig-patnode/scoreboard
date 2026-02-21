@@ -201,31 +201,38 @@
 
 		function renderLogo(elementId, logoUrl) {
 			const el = document.getElementById(elementId);
+			el.textContent = '';
 			if (logoUrl) {
-				el.innerHTML = `<img src="${logoUrl}" alt="">`;
+				const img = document.createElement('img');
+				img.src = logoUrl;
+				img.alt = '';
+				el.appendChild(img);
 				el.classList.add('visible');
 			} else {
-				el.innerHTML = '';
 				el.classList.remove('visible');
 			}
 		}
 
 		function renderKickDots(containerId, kicks, maxRounds, prevCount) {
 			const container = document.getElementById(containerId);
-			let html = '';
+			container.textContent = '';
 			for (let i = 0; i < maxRounds; i++) {
+				const dot = document.createElement('div');
 				if (i < kicks.length) {
 					const isNew = i >= prevCount;
 					if (kicks[i] === 'goal') {
-						html += `<div class="kick-dot kick-goal ${isNew ? 'kick-new' : ''}">✓</div>`;
+						dot.className = `kick-dot kick-goal${isNew ? ' kick-new' : ''}`;
+						dot.textContent = '✓';
 					} else {
-						html += `<div class="kick-dot kick-miss ${isNew ? 'kick-new' : ''}">✗</div>`;
+						dot.className = `kick-dot kick-miss${isNew ? ' kick-new' : ''}`;
+						dot.textContent = '✗';
 					}
 				} else {
-					html += `<div class="kick-dot kick-pending">${i + 1}</div>`;
+					dot.className = 'kick-dot kick-pending';
+					dot.textContent = String(i + 1);
 				}
+				container.appendChild(dot);
 			}
-			container.innerHTML = html;
 		}
 
 		function checkWinner(homeKicks, awayKicks) {

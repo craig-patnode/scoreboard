@@ -402,10 +402,13 @@
 		}
 
 		function renderLogoCrest(element, logoUrl) {
+			element.textContent = '';
 			if (logoUrl) {
-				element.innerHTML = `<img src="${logoUrl}" alt="">`;
+				const img = document.createElement('img');
+				img.src = logoUrl;
+				img.alt = '';
+				element.appendChild(img);
 			} else {
-				element.innerHTML = '';
 				element.classList.remove('visible');
 			}
 		}
@@ -483,8 +486,8 @@
 			elements.penAwayScore.textContent = awayGoals;
 
 			// Render dots
-			elements.penHomeDots.innerHTML = buildDotHTML(homeKicks, maxRounds);
-			elements.penAwayDots.innerHTML = buildDotHTML(awayKicks, maxRounds);
+			buildDots(elements.penHomeDots, homeKicks, maxRounds);
+			buildDots(elements.penAwayDots, awayKicks, maxRounds);
 
 			// Winner check
 			const winner = checkPenaltyWinner(homeKicks, awayKicks);
@@ -499,18 +502,19 @@
 			}
 		}
 
-		function buildDotHTML(kicks, maxRounds) {
-			let html = '';
+		function buildDots(container, kicks, maxRounds) {
+			container.textContent = '';
 			for (let i = 0; i < maxRounds; i++) {
+				const dot = document.createElement('div');
 				if (i < kicks.length) {
-					html += kicks[i] === 'goal'
-						? '<div class="pen-dot goal">✓</div>'
-						: '<div class="pen-dot miss">✗</div>';
+					dot.className = kicks[i] === 'goal' ? 'pen-dot goal' : 'pen-dot miss';
+					dot.textContent = kicks[i] === 'goal' ? '✓' : '✗';
 				} else {
-					html += `<div class="pen-dot pending">${i + 1}</div>`;
+					dot.className = 'pen-dot pending';
+					dot.textContent = String(i + 1);
 				}
+				container.appendChild(dot);
 			}
-			return html;
 		}
 
 		function checkPenaltyWinner(homeKicks, awayKicks) {

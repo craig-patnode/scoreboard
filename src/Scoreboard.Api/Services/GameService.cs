@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Scoreboard.Api.Data;
 using Scoreboard.Api.Data.Entities;
@@ -9,6 +10,9 @@ public class GameService
 {
 	private readonly ScoreboardDbContext _db;
 	private static readonly HashSet<string> ValidPeriods = new() { "1H", "2H", "OT1", "OT2", "PEN" };
+	private static readonly HashSet<string> AllowedLogoMimeTypes = new() { "data:image/png", "data:image/jpeg", "data:image/webp" };
+	private static readonly Regex HexColorRegex = new(@"^#[0-9A-Fa-f]{3,8}$", RegexOptions.Compiled);
+	private const int MaxPenaltyKicks = 15;
 
 	public GameService(ScoreboardDbContext db)
 	{
@@ -386,11 +390,16 @@ public class GameService
 		var game = await GetActiveGameAsync(streamerId);
 		if (game == null) return;
 
+		// Sanitize: trim and cap length
+		var sanitized = (name ?? "").Trim();
+		if (sanitized.Length > 50) sanitized = sanitized[..50];
+		if (string.IsNullOrEmpty(sanitized)) return;
+
 		var teamId = isHome ? game.HomeTeamId : game.AwayTeamId;
 		var team = await _db.Teams.FindAsync(teamId);
 		if (team == null) return;
 
-		team.TeamName = name;
+		team.TeamName = sanitized;
 		team.ModifiedDateUtc = DateTime.UtcNow;
 		await _db.SaveChangesAsync();
 	}
@@ -404,12 +413,17 @@ public class GameService
 		var team = await _db.Teams.FindAsync(teamId);
 		if (team == null) return;
 
-		if (request.JerseyColor != null)
+		if (request.JerseyColor != null && HexColorRegex.IsMatch(request.JerseyColor))
 			team.JerseyColor = request.JerseyColor;
-		if (request.NumberColor != null)
+		if (request.NumberColor != null && HexColorRegex.IsMatch(request.NumberColor))
 			team.NumberColor = request.NumberColor;
 		if (request.LogoData != null)
-			team.LogoUrl = request.LogoData;
+		{
+			// Validate logo MIME type — only allow known image formats
+			var isValidLogo = AllowedLogoMimeTypes.Any(mime => request.LogoData.StartsWith(mime + ";base64,", StringComparison.OrdinalIgnoreCase));
+			if (isValidLogo)
+				team.LogoUrl = request.LogoData;
+		}
 
 		team.ModifiedDateUtc = DateTime.UtcNow;
 		await _db.SaveChangesAsync();
@@ -511,6 +525,10 @@ public class GameService
 		bool isHome = (team ?? "home").Equals("home", StringComparison.OrdinalIgnoreCase);
 		var json = isHome ? game.HomePenaltyKicks : game.AwayPenaltyKicks;
 		var kicks = System.Text.Json.JsonSerializer.Deserialize<List<string>>(json ?? "[]") ?? new List<string>();
+
+		// Cap penalty kicks to prevent unbounded growth
+		if (kicks.Count >= MaxPenaltyKicks) return;
+
 		kicks.Add(normalized);
 		var updated = System.Text.Json.JsonSerializer.Serialize(kicks);
 

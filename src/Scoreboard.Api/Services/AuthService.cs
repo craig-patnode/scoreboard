@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scoreboard.Api.Data;
@@ -13,15 +14,34 @@ public class AuthService
 {
 	private readonly ScoreboardDbContext _db;
 	private readonly IConfiguration _config;
+	private readonly ILogger<AuthService> _logger;
 
-	public AuthService(ScoreboardDbContext db, IConfiguration config)
+	public AuthService(ScoreboardDbContext db, IConfiguration config, ILogger<AuthService> logger)
 	{
 		_db = db;
 		_config = config;
+		_logger = logger;
+	}
+
+	private static string? ValidatePassword(string password)
+	{
+		if (string.IsNullOrWhiteSpace(password) || password.Length < 8)
+			return "Password must be at least 8 characters.";
+		if (!Regex.IsMatch(password, @"[A-Z]"))
+			return "Password must contain at least one uppercase letter.";
+		if (!Regex.IsMatch(password, @"[a-z]"))
+			return "Password must contain at least one lowercase letter.";
+		if (!Regex.IsMatch(password, @"[0-9]"))
+			return "Password must contain at least one digit.";
+		return null;
 	}
 
 	public async Task<AuthResponse> SignUpAsync(SignUpRequest request)
 	{
+		var passwordError = ValidatePassword(request.Password);
+		if (passwordError != null)
+			return new AuthResponse { Success = false, Message = passwordError };
+
 		// Check if email already exists - if so, attempt login for idempotency
 		var existing = await _db.Streamers
 			.FirstOrDefaultAsync(s => s.EmailAddress == request.EmailAddress);
@@ -40,7 +60,8 @@ public class AuthService
 					DisplayName = existing.DisplayName
 				};
 			}
-			return new AuthResponse { Success = false, Message = "Email already registered." };
+			// Generic error to prevent email enumeration
+			return new AuthResponse { Success = false, Message = "Unable to complete registration. Please try again." };
 		}
 
 		var plan = await _db.SubscriptionPlans
@@ -161,7 +182,7 @@ public class AuthService
 		return new CouponValidationResponse
 		{
 			IsValid = true,
-			Message = $"Coupon applied! {discount.DiscountPercent}% off.",
+			Message = "Coupon applied successfully!",
 			DiscountPercent = discount.DiscountPercent ?? 0,
 			Description = discount.Description
 		};
@@ -169,13 +190,13 @@ public class AuthService
 
 	private string GenerateJwtToken(Streamer streamer)
 	{
-		var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-			_config["Jwt:Key"] ?? "ScoreboardDefaultSecretKeyThatShouldBeChanged123!"));
+		var jwtKey = _config["Jwt:Key"]
+			?? throw new InvalidOperationException("Jwt:Key must be configured.");
+		var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
 
 		var claims = new[]
 		{
 			new Claim(ClaimTypes.NameIdentifier, streamer.StreamerId.ToString()),
-			new Claim(ClaimTypes.Email, streamer.EmailAddress),
 			new Claim(ClaimTypes.Name, streamer.DisplayName),
 			new Claim("StreamKey", streamer.StreamKey.ToString()),
 			new Claim("IsPilot", streamer.IsPilot.ToString())
@@ -185,7 +206,7 @@ public class AuthService
 			issuer: _config["Jwt:Issuer"] ?? "Scoreboard",
 			audience: _config["Jwt:Audience"] ?? "Scoreboard",
 			claims: claims,
-			expires: DateTime.UtcNow.AddHours(24),
+			expires: DateTime.UtcNow.AddHours(2),
 			signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256)
 		);
 
