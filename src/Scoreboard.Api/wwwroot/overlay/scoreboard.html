@@ -148,12 +148,24 @@
         }
         .score.updated { animation: scoreFlash 0.8s ease-in-out; }
 
-        .boards { display: flex; gap: 10px; font-size: 12px; margin-top: 4px; }
-        .board-indicator { display: flex; align-items: center; gap: 3px; color: #000000; font-weight: 600; transition: color 1.2s ease-in-out; }
-        .board-icon { width: 15px; height: 17px; border-radius: 1px; display: inline-block; }
-        .yellow-board { background: #FFD700; }
-        .red-board { background: #DC143C; }
-        .board-count { font-size: 20px; }
+        .card-bars { display: flex; flex-direction: column; gap: 2px; margin-top: 3px; align-items: center; }
+        .card-bar-row { display: flex; gap: 3px; }
+        .card-bar {
+            width: 16px; height: 5px; border-radius: 2px;
+            opacity: 0; transform: scaleX(0);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .card-bar.visible { opacity: 1; transform: scaleX(1); }
+        .yellow-bar { background: #FFD700; }
+        .red-bar { background: #DC143C; }
+
+        @keyframes barPopIn {
+            0%   { opacity: 0; transform: scaleX(0) scaleY(0.5); }
+            50%  { opacity: 1; transform: scaleX(1.3) scaleY(1.2); }
+            75%  { transform: scaleX(0.9) scaleY(0.9); }
+            100% { opacity: 1; transform: scaleX(1) scaleY(1); }
+        }
+        .card-bar.pop { animation: barPopIn 0.4s ease-out forwards; }
 
         /* ===== PENALTY SHOOTOUT OVERLAY ===== */
         .penalty-overlay {
@@ -247,14 +259,16 @@
                         <div class="team-name-wrapper">
                             <div class="team-name" id="homeTeamName">HOME</div>
                         </div>
-                        <div class="boards">
-                            <div class="board-indicator" id="homeYellowIndicator">
-                                <span class="board-icon yellow-board"></span>
-                                <span id="homeYellow" class="board-count">0</span>
+                        <div class="card-bars" id="homeCardBars">
+                            <div class="card-bar-row">
+                                <span class="card-bar yellow-bar" id="homeYellow0"></span>
+                                <span class="card-bar yellow-bar" id="homeYellow1"></span>
+                                <span class="card-bar yellow-bar" id="homeYellow2"></span>
                             </div>
-                            <div class="board-indicator" id="homeRedIndicator">
-                                <span class="board-icon red-board"></span>
-                                <span id="homeRed" class="board-count">0</span>
+                            <div class="card-bar-row">
+                                <span class="card-bar red-bar" id="homeRed0"></span>
+                                <span class="card-bar red-bar" id="homeRed1"></span>
+                                <span class="card-bar red-bar" id="homeRed2"></span>
                             </div>
                         </div>
                     </div>
@@ -267,14 +281,16 @@
                         <div class="team-name-wrapper">
                             <div class="team-name" id="awayTeamName">OPPONENT</div>
                         </div>
-                        <div class="boards">
-                            <div class="board-indicator" id="awayYellowIndicator">
-                                <span class="board-icon yellow-board"></span>
-                                <span id="awayYellow" class="board-count">0</span>
+                        <div class="card-bars" id="awayCardBars">
+                            <div class="card-bar-row">
+                                <span class="card-bar yellow-bar" id="awayYellow0"></span>
+                                <span class="card-bar yellow-bar" id="awayYellow1"></span>
+                                <span class="card-bar yellow-bar" id="awayYellow2"></span>
                             </div>
-                            <div class="board-indicator" id="awayRedIndicator">
-                                <span class="board-icon red-board"></span>
-                                <span id="awayRed" class="board-count">0</span>
+                            <div class="card-bar-row">
+                                <span class="card-bar red-bar" id="awayRed0"></span>
+                                <span class="card-bar red-bar" id="awayRed1"></span>
+                                <span class="card-bar red-bar" id="awayRed2"></span>
                             </div>
                         </div>
                     </div>
@@ -331,17 +347,29 @@
             timer: document.getElementById('timer'),
             timerBox: document.getElementById('timerBox'),
             periodLabel: document.getElementById('periodLabel'),
-            homeYellow: document.getElementById('homeYellow'),
-            homeRed: document.getElementById('homeRed'),
-            awayYellow: document.getElementById('awayYellow'),
-            awayRed: document.getElementById('awayRed'),
+            homeYellowBars: [
+                document.getElementById('homeYellow0'),
+                document.getElementById('homeYellow1'),
+                document.getElementById('homeYellow2')
+            ],
+            homeRedBars: [
+                document.getElementById('homeRed0'),
+                document.getElementById('homeRed1'),
+                document.getElementById('homeRed2')
+            ],
+            awayYellowBars: [
+                document.getElementById('awayYellow0'),
+                document.getElementById('awayYellow1'),
+                document.getElementById('awayYellow2')
+            ],
+            awayRedBars: [
+                document.getElementById('awayRed0'),
+                document.getElementById('awayRed1'),
+                document.getElementById('awayRed2')
+            ],
             statusIndicator: document.getElementById('statusIndicator'),
             metallicStripeHome: document.getElementById('metallicStripeHome'),
             metallicStripeAway: document.getElementById('metallicStripeAway'),
-            homeYellowIndicator: document.getElementById('homeYellowIndicator'),
-            homeRedIndicator: document.getElementById('homeRedIndicator'),
-            awayYellowIndicator: document.getElementById('awayYellowIndicator'),
-            awayRedIndicator: document.getElementById('awayRedIndicator'),
             homeLogoCrest: document.getElementById('homeLogoCrest'),
             awayLogoCrest: document.getElementById('awayLogoCrest'),
             dividerLeft: document.querySelector('.divider-left'),
@@ -353,7 +381,7 @@
             penWinner: document.getElementById('penWinner')
         };
 
-        let previousState = { homeScore: 0, awayScore: 0 };
+        let previousState = { homeScore: 0, awayScore: 0, homeYellow: 0, homeRed: 0, awayYellow: 0, awayRed: 0 };
         let currentState = null;
         let timerInterval = null;
         let animationPlayed = false;
@@ -534,10 +562,10 @@
             // Penalty shootout overlay
             renderPenaltyOverlay(state);
 
-            elements.homeYellow.textContent = state.homeYellowCards || 0;
-            elements.homeRed.textContent = state.homeRedCards || 0;
-            elements.awayYellow.textContent = state.awayYellowCards || 0;
-            elements.awayRed.textContent = state.awayRedCards || 0;
+            updateCardBars(elements.homeYellowBars, state.homeYellowCards || 0);
+            updateCardBars(elements.homeRedBars, state.homeRedCards || 0);
+            updateCardBars(elements.awayYellowBars, state.awayYellowCards || 0);
+            updateCardBars(elements.awayRedBars, state.awayRedCards || 0);
 
             applyJerseyColor(elements.metallicStripeHome, state.homeJerseyColor);
             applyJerseyColor(elements.metallicStripeAway, state.awayJerseyColor);
@@ -547,15 +575,15 @@
             if (introComplete) {
                 elements.homeTeamName.style.color = state.homeNumberColor || '#ffffff';
                 elements.awayTeamName.style.color = state.awayNumberColor || '#003366';
-                elements.homeYellowIndicator.style.color = state.homeNumberColor || '#ffffff';
-                elements.homeRedIndicator.style.color = state.homeNumberColor || '#ffffff';
-                elements.awayYellowIndicator.style.color = state.awayNumberColor || '#003366';
-                elements.awayRedIndicator.style.color = state.awayNumberColor || '#003366';
             }
 
             // Logos: handled separately via LogosUpdated SignalR event (not in game state broadcasts)
 
-            previousState = { homeScore: state.homeScore, awayScore: state.awayScore };
+            previousState = {
+                homeScore: state.homeScore, awayScore: state.awayScore,
+                homeYellow: state.homeYellowCards || 0, homeRed: state.homeRedCards || 0,
+                awayYellow: state.awayYellowCards || 0, awayRed: state.awayRedCards || 0
+            };
 
             // Intro animation
             if (!animationPlayed) {
@@ -569,10 +597,6 @@
                         setTimeout(() => {
                             elements.homeTeamName.style.color = state.homeNumberColor || '#ffffff';
                             elements.awayTeamName.style.color = state.awayNumberColor || '#003366';
-                            elements.homeYellowIndicator.style.color = state.homeNumberColor || '#ffffff';
-                            elements.homeRedIndicator.style.color = state.homeNumberColor || '#ffffff';
-                            elements.awayYellowIndicator.style.color = state.awayNumberColor || '#003366';
-                            elements.awayRedIndicator.style.color = state.awayNumberColor || '#003366';
                             introComplete = true;  // Now applyState will handle color updates directly
                             // Logos appear last — full opacity
                             setTimeout(() => {
@@ -612,6 +636,18 @@
                 element.classList.add('updated');
             }
         }
+        function updateCardBars(bars, count) {
+            const n = Math.min(count, bars.length);
+            for (let i = 0; i < bars.length; i++) {
+                if (i < n) {
+                    if (!bars[i].classList.contains('visible')) {
+                        bars[i].classList.add('visible', 'pop');
+                    }
+                } else {
+                    bars[i].classList.remove('visible', 'pop');
+                }
+            }
+        }
         function updateConnectionStatus(connected) {
             if (connected) elements.statusIndicator.classList.remove('disconnected');
             else elements.statusIndicator.classList.add('disconnected');
@@ -622,14 +658,21 @@
             .withAutomaticReconnect([0, 1000, 2000, 5000, 10000, 30000])
             .build();
 
-        connection.on("GameStateUpdated", updateScoreboard);
+        let lastStateVersion = -1;
+
+        connection.on("GameStateUpdated", (state) => {
+            updateScoreboard(state);
+        });
+        // Track cache version so polls can skip unchanged state
+        connection.on("StateVersion", (version) => {
+            lastStateVersion = version;
+        });
         // Logos arrive on a separate channel — only on join/reconnect and appearance changes
         connection.on("LogosUpdated", (homeLogoUrl, awayLogoUrl) => {
             cachedHomeLogoUrl = homeLogoUrl;
             cachedAwayLogoUrl = awayLogoUrl;
             renderLogoCrest(elements.homeLogoCrest, homeLogoUrl);
             renderLogoCrest(elements.awayLogoCrest, awayLogoUrl);
-            // Ensure visibility (may arrive before or after intro animation)
             if (homeLogoUrl) elements.homeLogoCrest.classList.add('visible');
             if (awayLogoUrl) elements.awayLogoCrest.classList.add('visible');
         });
@@ -645,6 +688,16 @@
             } catch (err) { updateConnectionStatus(false); setTimeout(startConnection, 3000); }
         }
         startConnection();
+
+        // Safety-net poll — catches missed broadcasts (e.g., reconnection edge cases).
+        // Reads from in-memory cache on server (zero DB queries).
+        // Sends lastStateVersion so server returns nothing if state unchanged (zero bandwidth).
+        setInterval(() => {
+            if (streamKey && connection.state === 'Connected') {
+                connection.invoke("GetState", streamKey, lastStateVersion).catch(() => {});
+            }
+        }, 30000);
+
         window.addEventListener('load', adjustTeamNameSizes);
         window.addEventListener('resize', adjustTeamNameSizes);
     </script>

@@ -14,11 +14,13 @@ public class GameController : ControllerBase
 {
     private readonly GameService _gameService;
     private readonly IHubContext<GameHub> _hubContext;
+    private readonly GameStateCache _cache;
 
-    public GameController(GameService gameService, IHubContext<GameHub> hubContext)
+    public GameController(GameService gameService, IHubContext<GameHub> hubContext, GameStateCache cache)
     {
         _gameService = gameService;
         _hubContext = hubContext;
+        _cache = cache;
     }
 
     private int GetStreamerId() =>
@@ -35,11 +37,11 @@ public class GameController : ControllerBase
     /// </summary>
     private async Task BroadcastStateAsync()
     {
-        var streamerId = GetStreamerId();
         var streamKey = GetStreamKey();
-        var state = await _gameService.GetActiveGameStateAsync(streamerId);
+        var state = await _gameService.GetActiveGameStateAsync(GetStreamerId());
         if (state != null && !string.IsNullOrEmpty(streamKey))
         {
+            _cache.Set(streamKey, state);
             await _hubContext.Clients.Group(streamKey).SendAsync("GameStateUpdated", state);
         }
     }

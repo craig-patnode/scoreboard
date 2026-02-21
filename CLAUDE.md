@@ -2,6 +2,10 @@
 
 ## Development Preferences
 
+### Formatting
+- **Use tabs for indentation, not spaces** — applies to all file types (C#, HTML, JS, SQL, CSS)
+  - Exception: JSON and YAML files use 2 spaces (required by format spec / tooling convention)
+
 ### Code Quality & Best Practices
 - **Never hard-code values** - Always use configuration, database lookups, or API calls
 - Avoid stubs/placeholders with hardcoded validation in production code
@@ -72,6 +76,23 @@
 - SQL Server: `scoreboard-asql` / Database: `ScoreboardDb`
 - Resources are manually deployed to Azure
 - Primary workflow: `.github/workflows/main_scoreboard-app.yml`
+
+### Performance & Cost Optimization
+- **Use in-memory caching for frequently-read, infrequently-written data** — avoid DB round-trips for hot paths like overlay state polling
+  - Pattern: write-through cache (update cache on every write, read from cache on reads)
+  - Use `ConcurrentDictionary`-based singletons for simple key-value caches (e.g., `GameStateCache`)
+  - Key by stream key or other tenant identifier for multi-tenant isolation
+- **Minimize SignalR bandwidth** — send data only when it has changed
+  - Use version numbers so clients can skip unchanged state (server returns nothing if version matches)
+  - Separate rarely-changing data (logos, team config) from frequently-changing data (score, timer, cards)
+  - Logos and large blobs should only be sent on join/reconnect and explicit changes, never on periodic polls
+- **Prefer push over poll** — SignalR group broadcasts are far cheaper than N clients polling
+  - Use polling only as a safety net (30s+), not as the primary delivery mechanism
+  - A 3s poll with 1,000 viewers = 20,000 DB queries/min; a cached 30s poll = 0 DB queries/min
+- **Always add `app.UseWebSockets()` before `MapHub`** — ensures SignalR uses WebSocket transport (most efficient)
+- **Azure cost awareness** — every DB query, SignalR message, and bandwidth byte costs money at scale
+  - Profile hot paths before deploying: how many calls/second at N concurrent viewers?
+  - Projection queries (`.Select()`) with `.AsNoTracking()` for read-only data to minimize EF overhead
 
 ## Architecture Notes
 - .NET 8 ASP.NET Core application
