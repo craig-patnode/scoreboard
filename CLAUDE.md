@@ -35,6 +35,10 @@
 - **Branch naming convention**: Always create branches under `users/craigp/<title_summary_of_pr>`
   - Example: `users/craigp/implement_coupon_validation`
 - **One PR per fix/feature** - Create separate PRs for each logical change, don't bundle unrelated changes
+- **One open PR at a time** - Only one PR should be open at any given time to avoid merge conflicts
+  - Before creating a new PR, prompt the user to approve/merge the existing open PR first
+  - After the existing PR is merged: switch to `main`, pull latest, then create the new feature branch from `main`
+  - If a PR has merge conflicts: switch to `main`, pull, then merge `main` into the feature branch to resolve
 - **Before creating PR**: Always pull from `main` first to ensure branch is up to date
   - `git checkout main && git pull origin main`
   - `git checkout <feature-branch> && git merge main`

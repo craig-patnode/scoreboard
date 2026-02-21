@@ -9,76 +9,76 @@ namespace Scoreboard.Shared.DTOs;
 /// </summary>
 public class GameStateDto
 {
-    public int GameId { get; set; }
-    public string GameStatus { get; set; } = "PREGAME";
+	public int GameId { get; set; }
+	public string GameStatus { get; set; } = "PREGAME";
 
-    // Home Team
-    public int HomeTeamId { get; set; }
-    public string HomeTeamName { get; set; } = "Home";
-    public string HomeTeamCode { get; set; } = "HOME";
-    public string HomeJerseyColor { get; set; } = "#8B0000";
-    public string HomeNumberColor { get; set; } = "#FFFFFF";
-    public string? HomeLogoUrl { get; set; }
-    public int HomeScore { get; set; }
-    public int HomeYellowCards { get; set; }
-    public int HomeRedCards { get; set; }
+	// Home Team
+	public int HomeTeamId { get; set; }
+	public string HomeTeamName { get; set; } = "Home";
+	public string HomeTeamCode { get; set; } = "HOME";
+	public string HomeJerseyColor { get; set; } = "#8B0000";
+	public string HomeNumberColor { get; set; } = "#FFFFFF";
+	public string? HomeLogoUrl { get; set; }
+	public int HomeScore { get; set; }
+	public int HomeYellowCards { get; set; }
+	public int HomeRedCards { get; set; }
 
-    // Away Team
-    public int AwayTeamId { get; set; }
-    public string AwayTeamName { get; set; } = "Opponent";
-    public string AwayTeamCode { get; set; } = "OPP";
-    public string AwayJerseyColor { get; set; } = "#FFFFFF";
-    public string AwayNumberColor { get; set; } = "#003366";
-    public string? AwayLogoUrl { get; set; }
-    public int AwayScore { get; set; }
-    public int AwayYellowCards { get; set; }
-    public int AwayRedCards { get; set; }
+	// Away Team
+	public int AwayTeamId { get; set; }
+	public string AwayTeamName { get; set; } = "Opponent";
+	public string AwayTeamCode { get; set; } = "OPP";
+	public string AwayJerseyColor { get; set; } = "#FFFFFF";
+	public string AwayNumberColor { get; set; } = "#003366";
+	public string? AwayLogoUrl { get; set; }
+	public int AwayScore { get; set; }
+	public int AwayYellowCards { get; set; }
+	public int AwayRedCards { get; set; }
 
-    // Timer - client computes current time from these fields
-    public bool IsTimerRunning { get; set; }
-    public string TimerDirection { get; set; } = "UP";
-    public int HalfLengthMinutes { get; set; } = 45;
-    public int OtLengthMinutes { get; set; } = 5;
-    public string HomePenaltyKicks { get; set; } = "[]";
-    public string AwayPenaltyKicks { get; set; } = "[]";
+	// Timer - client computes current time from these fields
+	public bool IsTimerRunning { get; set; }
+	public string TimerDirection { get; set; } = "UP";
+	public int HalfLengthMinutes { get; set; } = 45;
+	public int OtLengthMinutes { get; set; } = 5;
+	public string HomePenaltyKicks { get; set; } = "[]";
+	public string AwayPenaltyKicks { get; set; } = "[]";
 
-    public int ElapsedSecondsAtPause { get; set; }
-    public DateTime? TimerStartedAtUtc { get; set; }
-    public int TimerSetSeconds { get; set; }
-    public DateTime ServerTimeUtc { get; set; } = DateTime.UtcNow;
+	public int ElapsedSecondsAtPause { get; set; }
+	public DateTime? TimerStartedAtUtc { get; set; }
+	public int TimerSetSeconds { get; set; }
+	public DateTime ServerTimeUtc { get; set; } = DateTime.UtcNow;
 
-    // Computed helper: what the timer shows right now (server-side snapshot)
-    public int CurrentTimerSeconds
-    {
-        get
-        {
-            if (!IsTimerRunning)
-                return ElapsedSecondsAtPause;
+	// Computed helper: what the timer shows right now (server-side snapshot)
+	public int CurrentTimerSeconds
+	{
+		get
+		{
+			if (!IsTimerRunning)
+				return ElapsedSecondsAtPause;
 
-            var elapsed = ElapsedSecondsAtPause;
-            if (TimerStartedAtUtc.HasValue)
-            {
-                elapsed += (int)(DateTime.UtcNow - TimerStartedAtUtc.Value).TotalSeconds;
-            }
+			var elapsed = ElapsedSecondsAtPause;
+			if (TimerStartedAtUtc.HasValue)
+			{
+				elapsed += (int)(DateTime.UtcNow - TimerStartedAtUtc.Value).TotalSeconds;
+			}
 
-            if (TimerDirection == "DOWN")
-                return Math.Max(0, TimerSetSeconds - elapsed);
+			if (TimerDirection == "DOWN")
+				return Math.Max(0, TimerSetSeconds - elapsed);
 
-            return elapsed;
-        }
-    }
+			return elapsed;
+		}
+	}
 
-    // Game info
-    public string CurrentPeriod { get; set; } = "1H";
-    public string? Venue { get; set; }
-    public DateTime GameDateUtc { get; set; }
+	// Game info
+	public string CurrentPeriod { get; set; } = "1H";
+	public string? Venue { get; set; }
+	public DateTime GameDateUtc { get; set; }
 
-    // Sport config
-    public string SportName { get; set; } = "Soccer";
-    public string SportCode { get; set; } = "SOC";
-    public bool HasCards { get; set; } = true;
-    public bool HasTimer { get; set; } = true;
-    public int DefaultPeriodLengthSeconds { get; set; } = 2700;
+	// Sport config
+	public string SportName { get; set; } = "Soccer";
+	public string SportCode { get; set; } = "SOC";
+	public bool HasCards { get; set; } = true;
+	public bool HasTimer { get; set; } = true;
+	public int DefaultPeriodLengthSeconds { get; set; } = 2700;
 }
 
 /// <summary>
@@ -86,7 +86,7 @@ public class GameStateDto
 /// </summary>
 public class UpdateScoreRequest
 {
-    public int Score { get; set; }
+	public int Score { get; set; }
 }
 
 /// <summary>
@@ -94,7 +94,7 @@ public class UpdateScoreRequest
 /// </summary>
 public class UpdateCardsRequest
 {
-    public int Count { get; set; }
+	public int Count { get; set; }
 }
 
 /// <summary>
@@ -102,7 +102,7 @@ public class UpdateCardsRequest
 /// </summary>
 public class SetTimerRequest
 {
-    public int Seconds { get; set; }
+	public int Seconds { get; set; }
 }
 
 /// <summary>
@@ -110,9 +110,9 @@ public class SetTimerRequest
 /// </summary>
 public class SetPeriodRequest
 {
-    public string CurrentPeriod { get; set; } = "1H";
-    public int? HalfLengthMinutes { get; set; }
-    public int? OtLengthMinutes { get; set; }
+	public string CurrentPeriod { get; set; } = "1H";
+	public int? HalfLengthMinutes { get; set; }
+	public int? OtLengthMinutes { get; set; }
 }
 
 /// <summary>
@@ -120,7 +120,7 @@ public class SetPeriodRequest
 /// </summary>
 public class SetTimerModeRequest
 {
-    public bool CountDown { get; set; }
+	public bool CountDown { get; set; }
 }
 
 /// <summary>
@@ -128,7 +128,7 @@ public class SetTimerModeRequest
 /// </summary>
 public class UpdateTeamNameRequest
 {
-    public string Name { get; set; } = string.Empty;
+	public string Name { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -136,9 +136,9 @@ public class UpdateTeamNameRequest
 /// </summary>
 public class UpdateTeamAppearanceRequest
 {
-    public string? JerseyColor { get; set; }
-    public string? NumberColor { get; set; }
-    public string? LogoData { get; set; }  // Base64 data URI (e.g., "data:image/png;base64,...")
+	public string? JerseyColor { get; set; }
+	public string? NumberColor { get; set; }
+	public string? LogoData { get; set; }  // Base64 data URI (e.g., "data:image/png;base64,...")
 }
 
 /// <summary>
@@ -146,11 +146,11 @@ public class UpdateTeamAppearanceRequest
 /// </summary>
 public class SignUpRequest
 {
-    public string DisplayName { get; set; } = string.Empty;
-    public string EmailAddress { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
-    public string PlanCode { get; set; } = "MONTHLY";
-    public string? CouponCode { get; set; }
+	public string DisplayName { get; set; } = string.Empty;
+	public string EmailAddress { get; set; } = string.Empty;
+	public string Password { get; set; } = string.Empty;
+	public string PlanCode { get; set; } = "MONTHLY";
+	public string? CouponCode { get; set; }
 }
 
 /// <summary>
@@ -158,8 +158,8 @@ public class SignUpRequest
 /// </summary>
 public class LoginRequest
 {
-    public string EmailAddress { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
+	public string EmailAddress { get; set; } = string.Empty;
+	public string Password { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -167,12 +167,12 @@ public class LoginRequest
 /// </summary>
 public class AuthResponse
 {
-    public bool Success { get; set; }
-    public string? Token { get; set; }
-    public string? Message { get; set; }
-    public int? StreamerId { get; set; }
-    public string? StreamKey { get; set; }
-    public string? DisplayName { get; set; }
+	public bool Success { get; set; }
+	public string? Token { get; set; }
+	public string? Message { get; set; }
+	public int? StreamerId { get; set; }
+	public string? StreamKey { get; set; }
+	public string? DisplayName { get; set; }
 }
 
 /// <summary>
@@ -180,26 +180,26 @@ public class AuthResponse
 /// </summary>
 public class CreateGameRequest
 {
-    public int? HomeTeamId { get; set; }
-    public int? AwayTeamId { get; set; }
-    public string? HomeTeamName { get; set; }
-    public string? AwayTeamName { get; set; }
-    public string? Venue { get; set; }
+	public int? HomeTeamId { get; set; }
+	public int? AwayTeamId { get; set; }
+	public string? HomeTeamName { get; set; }
+	public string? AwayTeamName { get; set; }
+	public string? Venue { get; set; }
 }
 
 public class RecordPenaltyRequest
 {
-    /// <summary>"home" or "away"</summary>
-    public string Team { get; set; } = "home";
+	/// <summary>"home" or "away"</summary>
+	public string Team { get; set; } = "home";
 
-    /// <summary>"goal" or "miss"</summary>
-    public string Result { get; set; } = "goal";
+	/// <summary>"goal" or "miss"</summary>
+	public string Result { get; set; } = "goal";
 }
 
 public class UndoPenaltyRequest
 {
-    /// <summary>"home" or "away"</summary>
-    public string Team { get; set; } = "home";
+	/// <summary>"home" or "away"</summary>
+	public string Team { get; set; } = "home";
 }
 
 /// <summary>
@@ -207,9 +207,9 @@ public class UndoPenaltyRequest
 /// </summary>
 public class CouponValidationResponse
 {
-    public bool IsValid { get; set; }
-    public string? Message { get; set; }
-    public decimal DiscountPercent { get; set; }
-    public string? Description { get; set; }
+	public bool IsValid { get; set; }
+	public string? Message { get; set; }
+	public decimal DiscountPercent { get; set; }
+	public string? Description { get; set; }
 }
 
