@@ -15,6 +15,7 @@ builder.Services.AddDbContext<ScoreboardDbContext>(options =>
 // Services
 builder.Services.AddScoped<GameService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddSingleton<GameStateCache>();
 
 // Auth
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "ScoreboardDefaultSecretKeyThatShouldBeChanged123!";
@@ -104,6 +105,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
+
+// WebSockets — required for reliable SignalR WebSocket transport
+app.UseWebSockets();
 
 // Serve static files (overlays, controller, signup, landing page)
 app.UseDefaultFiles();
