@@ -72,6 +72,15 @@
 		.success-screen .stream-key { background: #333; padding: 10px; border-radius: 4px; margin: 15px 0; font-family: monospace; color: #4CAF50; font-size: 12px; word-break: break-all; }
 
 		.demo-notice { background: #3a2a00; border: 1px solid #FFD700; border-radius: 4px; padding: 8px; margin-bottom: 15px; font-size: 11px; color: #FFD700; text-align: center; }
+
+		@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+		.btn-spinner {
+			display: inline-block; width: 14px; height: 14px;
+			border: 2px solid rgba(255, 255, 255, 0.3); border-top-color: #fff;
+			border-radius: 50%; animation: spin 0.6s linear infinite;
+			vertical-align: middle; margin-right: 6px;
+		}
+		button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
 	</style>
 </head>
 <body>
@@ -120,7 +129,7 @@
 				<label>Have a coupon?</label>
 				<div class="coupon-row">
 					<input type="text" id="couponCode" placeholder="Enter code" />
-					<button onclick="validateCoupon()">Apply</button>
+					<button id="couponApplyBtn" onclick="validateCoupon()">Apply</button>
 				</div>
 				<div class="coupon-status" id="couponStatus"></div>
 
@@ -149,7 +158,7 @@
 				<input type="text" id="cardName" placeholder="Full name" />
 
 				<div class="error" id="step3Error"></div>
-				<button class="btn-submit" onclick="submitSignup()">🔒 Subscribe & Create Account</button>
+				<button class="btn-submit" id="submitBtn" onclick="submitSignup()">🔒 Subscribe & Create Account</button>
 				<button class="btn-back" onclick="goToStep(2)">← Back</button>
 			</div>
 
@@ -171,6 +180,17 @@
 		const API_BASE = window.location.origin + '/api';
 		let selectedPlan = 'MONTHLY';
 		let couponValid = false;
+
+		function setButtonLoading(btn, isLoading, loadingText) {
+			if (isLoading) {
+				btn.disabled = true;
+				btn._originalHTML = btn.innerHTML;
+				btn.innerHTML = '<span class="btn-spinner"></span>' + (loadingText || btn.textContent);
+			} else {
+				btn.disabled = false;
+				if (btn._originalHTML) btn.innerHTML = btn._originalHTML;
+			}
+		}
 
 		function goToStep(step) {
 			// Validate current step
@@ -206,6 +226,8 @@
 			const status = document.getElementById('couponStatus');
 			if (!code) { status.textContent = ''; return; }
 
+			const btn = document.getElementById('couponApplyBtn');
+			setButtonLoading(btn, true, 'Checking…');
 			try {
 				const response = await fetch(`${API_BASE}/auth/validate-coupon/${encodeURIComponent(code)}`);
 				const result = await response.json();
@@ -223,10 +245,15 @@
 				status.textContent = '❌ Error validating coupon.';
 				status.className = 'coupon-status invalid';
 				couponValid = false;
+			} finally {
+				setButtonLoading(btn, false);
 			}
 		}
 
 		async function submitSignup() {
+			const btn = document.getElementById('submitBtn');
+			setButtonLoading(btn, true, 'Creating Account…');
+
 			const body = {
 				displayName: document.getElementById('displayName').value.trim(),
 				emailAddress: document.getElementById('email').value.trim(),
@@ -255,6 +282,8 @@
 				}
 			} catch (e) {
 				document.getElementById('step3Error').textContent = 'Connection error. Please try again.';
+			} finally {
+				setButtonLoading(btn, false);
 			}
 		}
 	</script>

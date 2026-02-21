@@ -135,6 +135,31 @@
 		@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
 		@keyframes toastOut { to { opacity: 0; transform: translateX(-50%) translateY(-20px); } }
 
+		/* Loading indicators */
+		@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+		.btn-spinner {
+			display: inline-block; width: 14px; height: 14px;
+			border: 2px solid rgba(255, 255, 255, 0.3); border-top-color: #fff;
+			border-radius: 50%; animation: spin 0.6s linear infinite;
+			vertical-align: middle; margin-right: 6px;
+		}
+		button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
+		.loading-overlay {
+			position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+			background: #1a1a1a; display: flex; flex-direction: column;
+			align-items: center; justify-content: center; z-index: 1000;
+		}
+		.loading-overlay .overlay-spinner {
+			width: 40px; height: 40px; border: 3px solid #333;
+			border-top-color: #4CAF50; border-radius: 50%;
+			animation: spin 0.8s linear infinite; margin-bottom: 12px;
+		}
+		.loading-overlay .overlay-text {
+			font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 2px;
+		}
+		@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+		.status-connecting { color: #ff9800; animation: pulse 1.5s ease-in-out infinite; }
+
 		/* ===== Penalty Section — ALWAYS VISIBLE standalone section ===== */
 		.penalty-section {
 			background: #1a1a1a; padding: 6px; border-radius: 6px; margin-top: 4px;
@@ -203,12 +228,16 @@
 </head>
 <body>
 	<div class="toast" id="toast"></div>
+	<div class="loading-overlay" id="loadingOverlay" style="display: none;">
+		<div class="overlay-spinner"></div>
+		<div class="overlay-text">Loading Game…</div>
+	</div>
 
 	<div class="login-screen" id="loginScreen">
 		<h2>⚽ Scoreboard Login</h2>
 		<input type="email" id="loginEmail" placeholder="Email Address" />
 		<input type="password" id="loginPassword" placeholder="Password" />
-		<button onclick="login()">Sign In</button>
+		<button id="loginBtn" onclick="login()">Sign In</button>
 		<div class="login-error" id="loginError"></div>
 		<div style="margin-top: 15px; font-size: 11px; color: #666;">
 			<a href="/signup.html" style="color: #4CAF50;">Create Account</a>
@@ -221,7 +250,7 @@
 			<span>Welcome, <strong id="displayName"></strong></span>
 			<span class="logout" onclick="logout()">Logout</span>
 		</div>
-		<div id="connectionStatus">Connecting…</div>
+		<div id="connectionStatus" class="status-connecting">● Connecting…</div>
 
 		<div class="game-setup" id="gameSetup">
 			<h3>Start New Game</h3>
@@ -229,7 +258,7 @@
 			<input type="text" id="setupAwayName" placeholder="Opponent Team Name" value="" />
 			<input type="text" id="setupVenue" placeholder="Venue (optional)" value="" />
 			<br>
-			<button class="btn-success" onclick="createGame()">⚽ Kick Off!</button>
+			<button class="btn-success" id="createGameBtn" onclick="createGame()">⚽ Kick Off!</button>
 		</div>
 
 		<div id="activeGame" style="display: none;">
@@ -437,6 +466,17 @@
 			setTimeout(() => { toast.className = 'toast'; }, 3000);
 		}
 
+		function setButtonLoading(btn, isLoading, loadingText) {
+			if (isLoading) {
+				btn.disabled = true;
+				btn._originalHTML = btn.innerHTML;
+				btn.innerHTML = '<span class="btn-spinner"></span>' + (loadingText || btn.textContent);
+			} else {
+				btn.disabled = false;
+				if (btn._originalHTML) btn.innerHTML = btn._originalHTML;
+			}
+		}
+
 		// ---- AUTH ----
 		function showLogin() {
 			document.getElementById('loginScreen').style.display = 'block';
@@ -446,12 +486,15 @@
 			document.getElementById('loginScreen').style.display = 'none';
 			document.getElementById('mainController').style.display = 'block';
 			document.getElementById('displayName').textContent = displayName || 'Streamer';
+			document.getElementById('loadingOverlay').style.display = 'flex';
 			initController();
 		}
 
 		async function login() {
 			const email = document.getElementById('loginEmail').value;
 			const password = document.getElementById('loginPassword').value;
+			const btn = document.getElementById('loginBtn');
+			setButtonLoading(btn, true, 'Signing In…');
 			try {
 				const res = await fetch(`${API_BASE}/auth/login`, {
 					method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -466,6 +509,7 @@
 					showController();
 				} else { document.getElementById('loginError').textContent = data.message || 'Login failed'; }
 			} catch (e) { document.getElementById('loginError').textContent = 'Connection error'; }
+			finally { setButtonLoading(btn, false); }
 		}
 
 		function logout() {
@@ -505,6 +549,7 @@
 			document.getElementById('otLengthInput').value = otLengthMinutes;
 			updateObsUrls();
 			await loadGameState();
+			document.getElementById('loadingOverlay').style.display = 'none';
 			connectSignalR();
 			initNameInputs();
 			['homeNameInput', 'awayNameInput'].forEach(id => {
@@ -533,20 +578,27 @@
 		function showActiveGame(state) { document.getElementById('gameSetup').style.display = 'none'; document.getElementById('activeGame').style.display = 'block'; applyState(state); }
 
 		async function createGame() {
-			const homeName = document.getElementById('setupHomeName').value || 'Home';
-			const awayName = document.getElementById('setupAwayName').value || 'Opponent';
-			const venue = document.getElementById('setupVenue').value;
-			await fetch(`${API_BASE}/game/create`, {
-				method: 'POST', headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-				body: JSON.stringify({ homeTeamName: homeName, awayTeamName: awayName, venue })
-			});
-			currentPeriod = '1H'; penaltyHomeKicks = []; penaltyAwayKicks = []; halftimeAutoStopped = false;
-			await loadGameState();
-			saveHalfSettings();
+			const btn = document.getElementById('createGameBtn');
+			setButtonLoading(btn, true, 'Creating…');
+			try {
+				const homeName = document.getElementById('setupHomeName').value || 'Home';
+				const awayName = document.getElementById('setupAwayName').value || 'Opponent';
+				const venue = document.getElementById('setupVenue').value;
+				await fetch(`${API_BASE}/game/create`, {
+					method: 'POST', headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+					body: JSON.stringify({ homeTeamName: homeName, awayTeamName: awayName, venue })
+				});
+				currentPeriod = '1H'; penaltyHomeKicks = []; penaltyAwayKicks = []; halftimeAutoStopped = false;
+				await loadGameState();
+				saveHalfSettings();
+			} finally {
+				setButtonLoading(btn, false);
+			}
 		}
 
 		// ---- SignalR ----
 		function connectSignalR() {
+			setConnectionStatus(false);
 			connection = new signalR.HubConnectionBuilder()
 				.withUrl(`${window.location.origin}/hubs/game`, { accessTokenFactory: () => token })
 				.withAutomaticReconnect()
@@ -573,8 +625,15 @@
 
 		function setConnectionStatus(connected) {
 			const el = document.getElementById('connectionStatus');
-			el.textContent = connected ? '🟢 Connected' : '🔴 Disconnected';
-			el.style.color = connected ? '#4CAF50' : '#f44336';
+			if (connected) {
+				el.textContent = '🟢 Connected';
+				el.style.color = '#4CAF50';
+				el.classList.remove('status-connecting');
+			} else {
+				el.textContent = '● Connecting…';
+				el.style.color = '';
+				el.classList.add('status-connecting');
+			}
 		}
 
 		// ===== PLAY — auto-advance to 2H at halftime =====
@@ -800,6 +859,8 @@
 		}
 
 		async function saveAppearance(team) {
+			const hasLogo = !!pendingLogos[team];
+			if (hasLogo) showToast('Saving appearance…', 'warning');
 			await apiPost(`team/${team}/appearance`, {
 				jerseyColor: document.getElementById(`${team}JerseyColor`).value,
 				numberColor: document.getElementById(`${team}NumberColor`).value,
