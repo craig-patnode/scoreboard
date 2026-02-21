@@ -29,7 +29,8 @@
             background: var(--board-bg);
             border: var(--board-border);
             border-radius: 8px;
-            padding: 12px 50px; text-align: center; min-width: 420px;
+            padding: 12px 50px; padding-top: 40px; text-align: center; min-width: 420px;
+            overflow: visible;
         }
 
         .halftime-label {
@@ -42,11 +43,17 @@
         .ht-team { text-align: center; min-width: 150px; }
 
         .ht-team-logo {
-            width: 40px; height: 40px; margin: 0 auto 4px;
+            width: 80px; height: 80px; margin: -30px auto 4px;
             display: flex; align-items: center; justify-content: center;
             font-size: 14px; font-weight: 900; color: #fff;
+            opacity: 0; transition: opacity 1s ease-in-out;
+            pointer-events: none;
         }
-        .ht-team-logo img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .ht-team-logo.visible { opacity: 1; }
+        .ht-team-logo img {
+            width: 100%; height: 100%; object-fit: contain;
+            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6));
+        }
 
         .ht-team-name {
             font-size: 15px; font-weight: 900; color: var(--text-primary); text-transform: uppercase;
@@ -134,15 +141,17 @@
         }
         const streamKey = getStreamKey();
 
-        function renderLogo(elementId, logoUrl, jerseyColor, numberColor, teamCode) {
+        let cachedHomeLogoUrl = null;
+        let cachedAwayLogoUrl = null;
+
+        function renderLogo(elementId, logoUrl) {
             const el = document.getElementById(elementId);
             if (logoUrl) {
-                el.innerHTML = `<img src="${logoUrl}" alt="${teamCode || ''}">`;
+                el.innerHTML = `<img src="${logoUrl}" alt="">`;
+                el.classList.add('visible');
             } else {
-                el.style.background = jerseyColor || '#333';
-                el.style.color = numberColor || '#fff';
-                el.style.borderRadius = '6px';
-                el.textContent = (teamCode || '?').substring(0, 3);
+                el.innerHTML = '';
+                el.classList.remove('visible');
             }
         }
 
@@ -156,8 +165,8 @@
             document.getElementById('awayYellow').textContent = state.awayYellowCards || 0;
             document.getElementById('awayRed').textContent = state.awayRedCards || 0;
 
-            renderLogo('homeLogo', state.homeLogoUrl, state.homeJerseyColor, state.homeNumberColor, state.homeTeamCode || state.homeTeamName);
-            renderLogo('awayLogo', state.awayLogoUrl, state.awayJerseyColor, state.awayNumberColor, state.awayTeamCode || state.awayTeamName);
+            renderLogo('homeLogo', cachedHomeLogoUrl);
+            renderLogo('awayLogo', cachedAwayLogoUrl);
         }
 
         const connection = new signalR.HubConnectionBuilder()
@@ -166,6 +175,12 @@
             .build();
 
         connection.on("GameStateUpdated", updateHalfTime);
+        connection.on("LogosUpdated", (homeLogoUrl, awayLogoUrl) => {
+            cachedHomeLogoUrl = homeLogoUrl;
+            cachedAwayLogoUrl = awayLogoUrl;
+            renderLogo('homeLogo', homeLogoUrl);
+            renderLogo('awayLogo', awayLogoUrl);
+        });
         connection.onreconnected(() => { if (streamKey) connection.invoke("JoinStream", streamKey); });
         connection.start().then(() => { if (streamKey) connection.invoke("JoinStream", streamKey); })
             .catch(() => setTimeout(() => location.reload(), 5000));

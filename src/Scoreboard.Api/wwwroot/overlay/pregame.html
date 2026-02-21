@@ -28,8 +28,8 @@
             background: var(--board-bg);
             border: var(--board-border);
             border-radius: 8px;
-            padding: 12px 50px; text-align: center;
-            min-width: 420px;
+            padding: 12px 50px; padding-top: 40px; text-align: center;
+            min-width: 420px; overflow: visible;
         }
 
         .matchup-label {
@@ -42,12 +42,16 @@
         .team-block { text-align: center; min-width: 160px; }
 
         .team-crest {
-            width: 50px; height: 50px; margin: 0 auto 6px;
+            width: 80px; height: 80px; margin: -30px auto 6px;
             display: flex; align-items: center; justify-content: center;
             font-size: 18px; font-weight: 900; color: #fff;
+            opacity: 0; transition: opacity 1s ease-in-out;
+            pointer-events: none;
         }
+        .team-crest.visible { opacity: 1; }
         .team-crest img {
-            max-width: 100%; max-height: 100%; object-fit: contain;
+            width: 100%; height: 100%; object-fit: contain;
+            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6));
         }
 
         .team-name-pg {
@@ -122,15 +126,17 @@
         }
         const streamKey = getStreamKey();
 
-        function renderCrest(elementId, logoUrl, jerseyColor, numberColor, teamCode) {
+        let cachedHomeLogoUrl = null;
+        let cachedAwayLogoUrl = null;
+
+        function renderCrest(elementId, logoUrl) {
             const el = document.getElementById(elementId);
             if (logoUrl) {
-                el.innerHTML = `<img src="${logoUrl}" alt="${teamCode || ''}">`;
+                el.innerHTML = `<img src="${logoUrl}" alt="">`;
+                el.classList.add('visible');
             } else {
-                el.style.background = jerseyColor || '#8B0000';
-                el.style.color = numberColor || '#fff';
-                el.style.borderRadius = '8px';
-                el.textContent = (teamCode || '?').substring(0, 3);
+                el.innerHTML = '';
+                el.classList.remove('visible');
             }
         }
 
@@ -138,8 +144,9 @@
             document.getElementById('homeTeamName').textContent = state.homeTeamName || 'HOME';
             document.getElementById('awayTeamName').textContent = state.awayTeamName || 'OPPONENT';
 
-            renderCrest('homeCrest', state.homeLogoUrl, state.homeJerseyColor, state.homeNumberColor, state.homeTeamCode || state.homeTeamName);
-            renderCrest('awayCrest', state.awayLogoUrl, state.awayJerseyColor, state.awayNumberColor, state.awayTeamCode || state.awayTeamName);
+            // Logos handled via separate LogosUpdated event — render cached values
+            renderCrest('homeCrest', cachedHomeLogoUrl);
+            renderCrest('awayCrest', cachedAwayLogoUrl);
 
             const info = document.getElementById('gameInfo');
             const date = state.gameDateUtc ? new Date(state.gameDateUtc + 'Z') : new Date();
@@ -152,6 +159,12 @@
             .build();
 
         connection.on("GameStateUpdated", updatePreGame);
+        connection.on("LogosUpdated", (homeLogoUrl, awayLogoUrl) => {
+            cachedHomeLogoUrl = homeLogoUrl;
+            cachedAwayLogoUrl = awayLogoUrl;
+            renderCrest('homeCrest', homeLogoUrl);
+            renderCrest('awayCrest', awayLogoUrl);
+        });
         connection.onreconnected(() => { if (streamKey) connection.invoke("JoinStream", streamKey); });
         connection.start().then(() => { if (streamKey) connection.invoke("JoinStream", streamKey); })
             .catch(() => setTimeout(() => location.reload(), 5000));
