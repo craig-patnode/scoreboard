@@ -60,8 +60,7 @@ public class AuthService
 					DisplayName = existing.DisplayName
 				};
 			}
-			// Generic error to prevent email enumeration
-			return new AuthResponse { Success = false, Message = "Unable to complete registration. Please try again." };
+			return new AuthResponse { Success = false, Message = "Email already registered." };
 		}
 
 		var plan = await _db.SubscriptionPlans
