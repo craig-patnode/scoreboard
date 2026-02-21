@@ -40,6 +40,12 @@
 - **Rate Limiting**: Authentication endpoints (login, signup, coupon validation) must have rate limiting to prevent brute force attacks.
 - **JWT Best Practices**: Short-lived tokens (1-2 hours), never include PII (email) in claims, never hardcode fallback secrets.
 - **File Uploads**: Validate MIME type (whitelist `data:image/png`, `data:image/jpeg`, `data:image/webp` only), enforce size limits, never trust client-provided content type.
+- **Resilience & Retry Logic**: Always implement retry with exponential backoff for external dependencies:
+  - **Database**: Use EF Core `EnableRetryOnFailure` (5 retries, 30s max delay) for transient SQL errors.
+  - **SignalR clients**: Use `withAutomaticReconnect([0, 1000, 2000, 5000, 10000, 30000])` with `onclose` fallback that retries indefinitely every 5s via `setTimeout`.
+  - **No page reloads** on connection failure — retry in-place to preserve user state and avoid OBS browser source flicker.
+  - **Health checks**: Expose `/healthz` endpoint with `AddHealthChecks().AddDbContextCheck<T>()` for infrastructure probing.
+  - **Toast notifications**: Show connection lost/restored toasts on user-facing pages (controller). Overlay pages log to console only.
 - **Refer to `SECURITY_AUDIT.md`** for the full list of known findings and remediation guidance.
 
 ### Git Workflow & Pull Requests

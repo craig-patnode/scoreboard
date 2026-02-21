@@ -158,7 +158,7 @@
 
 		const connection = new signalR.HubConnectionBuilder()
 			.withUrl(`${window.location.origin}/hubs/game`)
-			.withAutomaticReconnect()
+			.withAutomaticReconnect([0, 1000, 2000, 5000, 10000, 30000])
 			.build();
 
 		connection.on("GameStateUpdated", updatePreGame);
@@ -168,9 +168,17 @@
 			renderCrest('homeCrest', homeLogoUrl);
 			renderCrest('awayCrest', awayLogoUrl);
 		});
-		connection.onreconnected(() => { if (streamKey) connection.invoke("JoinStream", streamKey); });
-		connection.start().then(() => { if (streamKey) connection.invoke("JoinStream", streamKey); })
-			.catch(() => setTimeout(() => location.reload(), 5000));
+		connection.onreconnecting(() => console.warn('[pregame] SignalR reconnecting...'));
+		connection.onreconnected(() => { console.log('[pregame] SignalR reconnected'); if (streamKey) connection.invoke("JoinStream", streamKey); });
+		connection.onclose(() => { console.warn('[pregame] SignalR closed, retrying in 5s...'); setTimeout(startConnection, 5000); });
+
+		async function startConnection() {
+			try {
+				await connection.start();
+				if (streamKey) await connection.invoke("JoinStream", streamKey);
+			} catch (err) { console.error('[pregame] SignalR connect failed:', err); setTimeout(startConnection, 5000); }
+		}
+		startConnection();
 	</script>
 </body>
 </html>

@@ -319,9 +319,17 @@
 			renderLogo('awayLogo', awayLogoUrl);
 		});
 
-		connection.onreconnected(() => { if (streamKey) connection.invoke("JoinStream", streamKey); });
-		connection.start().then(() => { if (streamKey) connection.invoke("JoinStream", streamKey); })
-			.catch(() => setTimeout(() => location.reload(), 5000));
+		connection.onreconnecting(() => console.warn('[penalties] SignalR reconnecting...'));
+		connection.onreconnected(() => { console.log('[penalties] SignalR reconnected'); if (streamKey) connection.invoke("JoinStream", streamKey); });
+		connection.onclose(() => { console.warn('[penalties] SignalR closed, retrying in 5s...'); setTimeout(startConnection, 5000); });
+
+		async function startConnection() {
+			try {
+				await connection.start();
+				if (streamKey) await connection.invoke("JoinStream", streamKey);
+			} catch (err) { console.error('[penalties] SignalR connect failed:', err); setTimeout(startConnection, 5000); }
+		}
+		startConnection();
 	</script>
 </body>
 </html>

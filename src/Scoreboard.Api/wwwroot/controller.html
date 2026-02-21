@@ -131,6 +131,7 @@
 			display: none;
 		}
 		.toast.warning { background: #ff9800; }
+		.toast.success { background: #4CAF50; }
 		.toast.show { display: block; }
 		@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
 		@keyframes toastOut { to { opacity: 0; transform: translateX(-50%) translateY(-20px); } }
@@ -451,7 +452,7 @@
 		function showToast(msg, type = 'error') {
 			const toast = document.getElementById('toast');
 			toast.textContent = msg;
-			toast.className = `toast show ${type === 'warning' ? 'warning' : ''}`;
+			toast.className = `toast show ${type === 'warning' ? 'warning' : type === 'success' ? 'success' : ''}`;
 			setTimeout(() => { toast.className = 'toast'; }, 3000);
 		}
 
@@ -590,7 +591,7 @@
 			setConnectionStatus(false);
 			connection = new signalR.HubConnectionBuilder()
 				.withUrl(`${window.location.origin}/hubs/game`, { accessTokenFactory: () => token })
-				.withAutomaticReconnect()
+				.withAutomaticReconnect([0, 1000, 2000, 5000, 10000, 30000])
 				.build();
 			connection.on("GameStateUpdated", (state) => {
 				lastState = state;
@@ -606,10 +607,28 @@
 				setLogoPreview('home', homeLogoUrl);
 				setLogoPreview('away', awayLogoUrl);
 			});
-			connection.onreconnecting(() => setConnectionStatus(false));
-			connection.onreconnected(() => { setConnectionStatus(true); if (streamKey) connection.invoke("JoinStream", streamKey); });
-			connection.start().then(() => { setConnectionStatus(true); if (streamKey) connection.invoke("JoinStream", streamKey); })
-				.catch(() => setConnectionStatus(false));
+			connection.onreconnecting(() => {
+				setConnectionStatus(false);
+				showToast('Connection lost. Reconnecting...', 'warning');
+			});
+			connection.onreconnected(() => {
+				setConnectionStatus(true);
+				showToast('Connection restored!', 'success');
+				if (streamKey) connection.invoke("JoinStream", streamKey);
+			});
+			connection.onclose(() => {
+				setConnectionStatus(false);
+				showToast('Connection lost. Retrying...', 'error');
+				setTimeout(connectSignalR, 5000);
+			});
+			connection.start().then(() => {
+				setConnectionStatus(true);
+				if (streamKey) connection.invoke("JoinStream", streamKey);
+			}).catch(() => {
+				setConnectionStatus(false);
+				showToast('Unable to connect. Retrying...', 'error');
+				setTimeout(connectSignalR, 5000);
+			});
 		}
 
 		function setConnectionStatus(connected) {

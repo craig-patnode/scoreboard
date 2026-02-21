@@ -682,7 +682,10 @@
 		});
 		connection.onreconnecting(() => updateConnectionStatus(false));
 		connection.onreconnected(() => { updateConnectionStatus(true); if (streamKey) connection.invoke("JoinStream", streamKey); });
-		connection.onclose(() => updateConnectionStatus(false));
+		connection.onclose(() => {
+			updateConnectionStatus(false);
+			setTimeout(startConnection, 5000);
+		});
 
 		async function startConnection() {
 			try {
