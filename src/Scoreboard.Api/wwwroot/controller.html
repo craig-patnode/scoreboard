@@ -161,16 +161,6 @@
 		.status-connecting { color: #ff9800; animation: pulse 1.5s ease-in-out infinite; }
 
 		/* ===== Penalty Section — ALWAYS VISIBLE standalone section ===== */
-		.penalty-section {
-			background: #1a1a1a; padding: 6px; border-radius: 6px; margin-top: 4px;
-			border: 2px solid #9C27B0;
-		}
-		.penalty-section .panel-title { color: #9C27B0; }
-		.penalty-grid {
-			display: grid; grid-template-columns: 1fr auto 1fr; gap: 6px; align-items: start;
-		}
-		.penalty-team { text-align: center; }
-		.penalty-team-name { font-size: 9px; font-weight: bold; color: #fff; margin-bottom: 3px; }
 		.penalty-kicks { display: flex; gap: 3px; justify-content: center; margin-bottom: 4px; flex-wrap: wrap; }
 		.kick-dot {
 			width: 18px; height: 18px; border-radius: 50%; border: 2px solid #555;
@@ -187,6 +177,8 @@
 			text-align: center; font-size: 10px; color: #FFD700; font-weight: bold;
 			margin-top: 4px; display: none;
 		}
+		.penalty-inline { margin-top: 6px; }
+		.penalty-center { text-align: center; margin: 4px 0; }
 
 		/* Appearance */
 		.appearance-inline { margin-top: 4px; border-top: 1px solid #333; padding-top: 4px; }
@@ -268,21 +260,30 @@
 					<div class="team">
 						<div class="team-label">Home Team</div>
 						<input id="homeNameInput" class="team-name-input" placeholder="Home" />
-						<div class="score-display" id="homeScoreDisplay">0</div>
-						<div class="score-controls">
-							<button class="btn-success btn-sm" onclick="changeScore('home', 1)">+1</button>
-							<button class="btn-success btn-sm" onclick="changeScore('home', -1)">-1</button>
-						</div>
-						<div style="margin-top: 8px;">
-							<div class="control-row">
-								<button class="btn-light-warning btn-sm" onclick="changeCard('home','yellow',1)">+1</button>
-								<input id="homeYellowInput" class="mini" readonly />
-								<button class="btn-light-warning btn-sm" onclick="changeCard('home','yellow',-1)">-1</button>
+						<div class="game-controls" id="homeGameControls">
+							<div class="score-display" id="homeScoreDisplay">0</div>
+							<div class="score-controls">
+								<button class="btn-success btn-sm" onclick="changeScore('home', 1)">+1</button>
+								<button class="btn-success btn-sm" onclick="changeScore('home', -1)">-1</button>
 							</div>
-							<div class="control-row">
-								<button class="btn-danger btn-sm" onclick="changeCard('home','red',1)">+1</button>
-								<input id="homeRedInput" class="mini" readonly />
-								<button class="btn-danger btn-sm" onclick="changeCard('home','red',-1)">-1</button>
+							<div style="margin-top: 8px;">
+								<div class="control-row">
+									<button class="btn-light-warning btn-sm" onclick="changeCard('home','yellow',1)">+1</button>
+									<input id="homeYellowInput" class="mini" readonly />
+									<button class="btn-light-warning btn-sm" onclick="changeCard('home','yellow',-1)">-1</button>
+								</div>
+								<div class="control-row">
+									<button class="btn-danger btn-sm" onclick="changeCard('home','red',1)">+1</button>
+									<input id="homeRedInput" class="mini" readonly />
+									<button class="btn-danger btn-sm" onclick="changeCard('home','red',-1)">-1</button>
+								</div>
+							</div>
+						</div>
+						<div class="penalty-inline" id="homePenaltyInline" style="display: none;">
+							<div class="penalty-kicks" id="penHomeKicks"></div>
+							<div class="penalty-controls">
+								<button class="btn-success btn-sm" onclick="recordPenalty('home', true)">⚽ Goal</button>
+								<button class="btn-danger btn-sm" onclick="recordPenalty('home', false)">✗ Miss</button>
 							</div>
 						</div>
 						<div class="appearance-inline">
@@ -312,20 +313,35 @@
 							<button class="btn-secondary btn-sm" onclick="apiPost('timer/stop')">⏸</button>
 							<button class="btn-danger btn-sm" onclick="apiPost('timer/reset')">↻</button>
 						</div>
-						<div class="control-row">
-							<input id="timerSetInput" class="mini" placeholder="00:00" style="width: 55px;" />
-							<button class="btn-primary btn-sm" onclick="setTimer()">Set</button>
+						<div class="timer-extras" id="timerExtras">
+							<div class="control-row">
+								<input id="timerSetInput" class="mini" placeholder="00:00" style="width: 55px;" />
+								<button class="btn-primary btn-sm" onclick="setTimer()">Set</button>
+							</div>
+							<div class="timer-mode" id="timerMode">Counting Up</div>
+							<div class="control-row">
+								<button class="btn-secondary btn-sm" onclick="setTimerMode(false)">↑ Up</button>
+								<button class="btn-secondary btn-sm" onclick="setTimerMode(true)">↓ Down</button>
+							</div>
+							<div class="half-settings">
+								<label>Half (min)</label>
+								<input id="halfLengthInput" value="45" onchange="saveHalfSettings()" />
+								<label>OT (min)</label>
+								<input id="otLengthInput" value="5" onchange="saveHalfSettings()" />
+							</div>
 						</div>
-						<div class="timer-mode" id="timerMode">Counting Up</div>
-						<div class="control-row">
-							<button class="btn-secondary btn-sm" onclick="setTimerMode(false)">↑ Up</button>
-							<button class="btn-secondary btn-sm" onclick="setTimerMode(true)">↓ Down</button>
-						</div>
-						<div class="half-settings">
-							<label>Half (min)</label>
-							<input id="halfLengthInput" value="45" onchange="saveHalfSettings()" />
-							<label>OT (min)</label>
-							<input id="otLengthInput" value="5" onchange="saveHalfSettings()" />
+						<div class="penalty-center" id="penaltyCenter" style="display: none;">
+							<div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+								<span class="penalty-score" id="penHomeScore">0</span>
+								<span class="penalty-score-sep">-</span>
+								<span class="penalty-score" id="penAwayScore">0</span>
+							</div>
+							<div style="margin-top: 4px; font-size: 10px; color: #888;" id="penRoundLabel">Round 1</div>
+							<div class="penalty-winner" id="penaltyWinner"></div>
+							<div style="display: flex; gap: 3px; margin-top: 4px; justify-content: center;">
+								<button class="btn-secondary btn-sm" onclick="undoLastPenalty()">↩ Undo</button>
+								<button class="btn-danger btn-sm" onclick="resetPenalties()">🔄 Reset</button>
+							</div>
 						</div>
 						<div style="text-align: center; margin-bottom: 6px;">
 							<span class="period-badge period-1h" id="periodBadge">1ST HALF</span>
@@ -343,21 +359,30 @@
 					<div class="team">
 						<div class="team-label">Away Team</div>
 						<input id="awayNameInput" class="team-name-input" placeholder="Away" />
-						<div class="score-display" id="awayScoreDisplay">0</div>
-						<div class="score-controls">
-							<button class="btn-success btn-sm" onclick="changeScore('away', 1)">+1</button>
-							<button class="btn-success btn-sm" onclick="changeScore('away', -1)">-1</button>
-						</div>
-						<div style="margin-top: 8px;">
-							<div class="control-row">
-								<button class="btn-light-warning btn-sm" onclick="changeCard('away','yellow',1)">+1</button>
-								<input id="awayYellowInput" class="mini" readonly />
-								<button class="btn-light-warning btn-sm" onclick="changeCard('away','yellow',-1)">-1</button>
+						<div class="game-controls" id="awayGameControls">
+							<div class="score-display" id="awayScoreDisplay">0</div>
+							<div class="score-controls">
+								<button class="btn-success btn-sm" onclick="changeScore('away', 1)">+1</button>
+								<button class="btn-success btn-sm" onclick="changeScore('away', -1)">-1</button>
 							</div>
-							<div class="control-row">
-								<button class="btn-danger btn-sm" onclick="changeCard('away','red',1)">+1</button>
-								<input id="awayRedInput" class="mini" readonly />
-								<button class="btn-danger btn-sm" onclick="changeCard('away','red',-1)">-1</button>
+							<div style="margin-top: 8px;">
+								<div class="control-row">
+									<button class="btn-light-warning btn-sm" onclick="changeCard('away','yellow',1)">+1</button>
+									<input id="awayYellowInput" class="mini" readonly />
+									<button class="btn-light-warning btn-sm" onclick="changeCard('away','yellow',-1)">-1</button>
+								</div>
+								<div class="control-row">
+									<button class="btn-danger btn-sm" onclick="changeCard('away','red',1)">+1</button>
+									<input id="awayRedInput" class="mini" readonly />
+									<button class="btn-danger btn-sm" onclick="changeCard('away','red',-1)">-1</button>
+								</div>
+							</div>
+						</div>
+						<div class="penalty-inline" id="awayPenaltyInline" style="display: none;">
+							<div class="penalty-kicks" id="penAwayKicks"></div>
+							<div class="penalty-controls">
+								<button class="btn-success btn-sm" onclick="recordPenalty('away', true)">⚽ Goal</button>
+								<button class="btn-danger btn-sm" onclick="recordPenalty('away', false)">✗ Miss</button>
 							</div>
 						</div>
 						<div class="appearance-inline">
@@ -382,42 +407,6 @@
 
 			<div class="reset-row">
 				<button class="btn-danger btn-sm" onclick="resetAll()">🔄 Reset All</button>
-			</div>
-
-			<!-- ===== PENALTY SECTION — ALWAYS VISIBLE for testing ===== -->
-			<div class="penalty-section" id="penaltySection">
-				<div class="panel-title">⚽ Penalty Shootout</div>
-				<div class="penalty-grid">
-					<div class="penalty-team">
-						<div class="penalty-team-name" id="penHomeTeamName">HOME</div>
-						<div class="penalty-kicks" id="penHomeKicks"></div>
-						<div class="penalty-controls">
-							<button class="btn-success btn-sm" onclick="recordPenalty('home', true)">⚽ Goal</button>
-							<button class="btn-danger btn-sm" onclick="recordPenalty('home', false)">✗ Miss</button>
-						</div>
-					</div>
-					<div style="text-align: center; padding-top: 20px;">
-						<div style="display: flex; align-items: center; gap: 6px;">
-							<span class="penalty-score" id="penHomeScore">0</span>
-							<span class="penalty-score-sep">-</span>
-							<span class="penalty-score" id="penAwayScore">0</span>
-						</div>
-						<div style="margin-top: 8px; font-size: 10px; color: #888;" id="penRoundLabel">Round 1</div>
-					</div>
-					<div class="penalty-team">
-						<div class="penalty-team-name" id="penAwayTeamName">OPPONENT</div>
-						<div class="penalty-kicks" id="penAwayKicks"></div>
-						<div class="penalty-controls">
-							<button class="btn-success btn-sm" onclick="recordPenalty('away', true)">⚽ Goal</button>
-							<button class="btn-danger btn-sm" onclick="recordPenalty('away', false)">✗ Miss</button>
-						</div>
-					</div>
-				</div>
-				<div class="penalty-winner" id="penaltyWinner"></div>
-				<div style="text-align: center; margin-top: 8px;">
-					<button class="btn-secondary btn-sm" onclick="undoLastPenalty()">↩ Undo Last</button>
-					<button class="btn-danger btn-sm" onclick="resetPenalties()">🔄 Reset PKs</button>
-				</div>
 			</div>
 
 			<div class="obs-urls" id="obsUrls">
@@ -698,7 +687,19 @@
 				btn.classList.toggle('active', btn.dataset.period === currentPeriod);
 			});
 
-			// NOTE: penalty section is ALWAYS visible now — no show/hide toggle
+			const isPen = currentPeriod === 'PEN';
+
+			// Toggle game controls vs penalty inline in team columns
+			document.getElementById('homeGameControls').style.display = isPen ? 'none' : '';
+			document.getElementById('awayGameControls').style.display = isPen ? 'none' : '';
+			document.getElementById('homePenaltyInline').style.display = isPen ? '' : 'none';
+			document.getElementById('awayPenaltyInline').style.display = isPen ? '' : 'none';
+
+			// Toggle timer extras vs penalty center
+			document.getElementById('timerExtras').style.display = isPen ? 'none' : '';
+			document.getElementById('penaltyCenter').style.display = isPen ? '' : 'none';
+
+			if (isPen) renderPenalties();
 		}
 
 		// ---- Timer ----
@@ -772,8 +773,6 @@
 			document.getElementById('penHomeScore').textContent = homeGoals;
 			document.getElementById('penAwayScore').textContent = awayGoals;
 			document.getElementById('penRoundLabel').textContent = `Round ${Math.min(round, maxRounds)}`;
-			document.getElementById('penHomeTeamName').textContent = lastState?.homeTeamName || 'HOME';
-			document.getElementById('penAwayTeamName').textContent = lastState?.awayTeamName || 'OPPONENT';
 
 			renderKickDots('penHomeKicks', penaltyHomeKicks, maxRounds);
 			renderKickDots('penAwayKicks', penaltyAwayKicks, maxRounds);
